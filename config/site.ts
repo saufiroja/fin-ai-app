@@ -17,10 +17,6 @@ export const siteConfig = {
       href: '/chat',
     },
     {
-      label: 'Upload Receipt',
-      href: '/upload',
-    },
-    {
       label: 'Insight',
       href: '/insight',
     },
@@ -40,10 +36,6 @@ export const siteConfig = {
     },
     {
       label: 'Chat',
-      href: '/chat',
-    },
-    {
-      label: 'Upload Receipt',
       href: '/chat',
     },
     {

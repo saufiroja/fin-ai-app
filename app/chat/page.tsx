@@ -38,10 +38,11 @@ export default function Chat() {
               <Button
                 isIconOnly
                 color='primary'
-                variant='flat'
+                variant='solid'
                 onPress={handleSendMessage}
+                className='w-8 h-8 min-w-0 min-h-0 p-0 rounded-full shadow-md transition-transform hover:scale-110 active:scale-95 duration-150'
               >
-                <Icon icon='lucide:send' className='text-xl' />
+                <Icon icon='lucide:send' className='text-lg' />
               </Button>
             }
           />
