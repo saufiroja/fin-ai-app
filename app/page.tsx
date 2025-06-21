@@ -88,7 +88,7 @@ export default function Home() {
                       icon='lucide:scan-line'
                       className='w-4 h-4 text-green-500'
                     />
-                    <span>Scan Struk</span>
+                    <span>Scan Receipt</span>
                   </div>
                 }
               />
@@ -103,7 +103,7 @@ export default function Home() {
                       placeholder='Ketik pesan di sini...'
                       startContent={
                         <Icon
-                          icon='lucide:file-text'
+                          icon='lucide:sparkles'
                           className='text-default-400 pointer-events-none flex-shrink-0'
                         />
                       }
@@ -119,7 +119,7 @@ export default function Home() {
                           color='primary'
                           variant='solid'
                           type='submit'
-                          className='w-10 h-10 min-w-0 min-h-0 p-0 rounded-full shadow-md transition-transform hover:scale-110 active:scale-95 duration-150'
+                          className='rounded-full shadow-md transition-transform hover:scale-110 active:scale-95 duration-150 bg-gradient-to-r from-primary to-secondary'
                           aria-label='Send message'
                         >
                           <Icon icon='lucide:send' className='text-lg' />

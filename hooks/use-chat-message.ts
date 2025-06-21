@@ -7,9 +7,7 @@ interface Message {
 }
 
 export const useChatMessages = () => {
-  const [messages, setMessages] = React.useState<Message[]>([
-    { id: 1, text: 'Hello! How can I assist you today?', sender: 'bot' },
-  ]);
+  const [messages, setMessages] = React.useState<Message[]>([]);
 
   const addMessage = (newMessage: Message) => {
     setMessages((prevMessages) => [...prevMessages, newMessage]);
