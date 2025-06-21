@@ -9,6 +9,8 @@ import { Card, CardBody } from '@heroui/card';
 import { Tabs, Tab } from '@heroui/tabs';
 import { PhotoUpload } from '@/components/photo-upload';
 import { Form } from '@heroui/form';
+import SparkleIcon from '@/components/sparkle-icon';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
   // Simulate user login (replace with real user context if available)
@@ -29,14 +31,17 @@ export default function Home() {
   const { addMessage } = useChatMessages();
   const [newMessage, setNewMessage] = React.useState('');
   const [activeTab, setActiveTab] = React.useState('chat');
+  const router = useRouter();
 
   React.useEffect(() => {
     setRandomSubtitle(subtitles[Math.floor(Math.random() * subtitles.length)]);
   }, []);
   const handleSendMessage = () => {
     if (newMessage.trim()) {
-      addMessage({ id: Date.now(), text: newMessage, sender: 'user' });
+      // Simpan pesan ke localStorage untuk diambil di /chat
+      localStorage.setItem('pendingMessage', newMessage);
       setNewMessage('');
+      router.push('/chat');
     }
   };
   return (
@@ -100,13 +105,8 @@ export default function Home() {
                   <div className='flex-1' />
                   <div className='pt-2'>
                     <Textarea
-                      placeholder='Ketik pesan di sini...'
-                      startContent={
-                        <Icon
-                          icon='lucide:sparkles'
-                          className='text-default-400 pointer-events-none flex-shrink-0'
-                        />
-                      }
+                      placeholder='write your message here...'
+                      startContent={<SparkleIcon />}
                       onKeyDown={(e) =>
                         e.key === 'Enter' && !e.shiftKey && handleSendMessage()
                       }

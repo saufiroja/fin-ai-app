@@ -1,7 +1,7 @@
 'use client';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardBody, CardHeader } from '@heroui/card';
-import { Avatar, AvatarGroup } from '@heroui/avatar';
+import { Avatar } from '@heroui/avatar';
 import {
   Dropdown,
   DropdownTrigger,
@@ -10,184 +10,108 @@ import {
 } from '@heroui/dropdown';
 import { Input, Textarea } from '@heroui/input';
 import { Button } from '@heroui/button';
-import { Divider } from '@heroui/divider';
 import { ScrollShadow } from '@heroui/scroll-shadow';
-import { Chip } from '@heroui/chip';
-import { Badge } from '@heroui/badge';
-import { Spacer } from '@heroui/spacer';
+import { Form } from '@heroui/form';
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+} from '@heroui/modal';
 import { Icon } from '@iconify/react';
 import { ChatMessage } from '@/components/chat-message';
-import { useChatMessages } from '@/hooks/use-chat-message';
+import SparkleIcon from '@/components/sparkle-icon';
+import { suggestedPrompts } from '@/dummy/suggestedPrompts';
+import { Search } from 'lucide-react';
+import { useChatService } from '@/hooks/useChatService';
+
+const actions = [
+  {
+    key: 'rename',
+    label: 'Rename chat',
+    icon: 'lucide:edit-2',
+    color: 'primary',
+  },
+  {
+    key: 'archive',
+    label: 'Archive chat',
+    icon: 'lucide:archive',
+    color: 'secondary',
+  },
+  {
+    key: 'delete',
+    label: 'Delete chat',
+    icon: 'lucide:trash-2',
+    color: 'danger',
+  },
+];
 
 export default function ChatPage() {
-  const { messages, addMessage } = useChatMessages();
+  const {
+    chatHistory,
+    chatMessagesById,
+    setChatMessagesById,
+    selectedChat,
+    setSelectedChat,
+    selectedChatId,
+    setSelectedChatId,
+    isTyping,
+    createNewChat,
+    sendMessage,
+    renameChat,
+    deleteChat,
+    archiveChat,
+  } = useChatService();
   const [newMessage, setNewMessage] = React.useState('');
-  const [selectedChat, setSelectedChat] = React.useState('New Chat');
-  const [isTyping, setIsTyping] = React.useState(false);
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const [search, setSearch] = React.useState('');
 
-  // Enhanced chat history with more metadata
-  const chatHistory = [
-    {
-      id: 1,
-      title: 'New Chat',
-    },
-    {
-      id: 2,
-      title: 'Budgeting Tips',
-    },
-    {
-      id: 3,
-      title: 'Investment Advice',
-    },
-    {
-      id: 4,
-      title: 'Expense Tracking',
-    },
-    {
-      id: 5,
-      title: 'Financial Planning',
-    },
-    {
-      id: 6,
-      title: 'Tax Preparation',
-    },
-    {
-      id: 7,
-      title: 'Retirement Savings',
-    },
-    {
-      id: 8,
-      title: 'Debt Management',
-    },
-    {
-      id: 9,
-      title: 'Insurance Review',
-    },
-    {
-      id: 10,
-      title: 'Estate Planning',
-    },
-    {
-      id: 11,
-      title: 'Financial Goals',
-    },
-    {
-      id: 12,
-      title: 'Investment Portfolio',
-    },
-    {
-      id: 13,
-      title: 'Market Analysis',
-    },
-    {
-      id: 14,
-      title: 'Financial News',
-    },
-    {
-      id: 15,
-      title: 'Wealth Management',
-    },
-    {
-      id: 16,
-      title: 'Savings Strategies',
-    },
-    {
-      id: 17,
-      title: 'Cash Flow Management',
-    },
-    {
-      id: 18,
-      title: 'Financial Literacy',
-    },
-    {
-      id: 19,
-      title: 'Investment Research',
-    },
-    {
-      id: 20,
-      title: 'Financial Tools',
-    },
-  ];
-
-  const suggestedPrompts = [
-    {
-      icon: 'lucide:wallet',
-      text: 'Help me create a monthly budget',
-      color: 'primary',
-    },
-    {
-      icon: 'lucide:search',
-      text: 'Search my expenses by category',
-      color: 'secondary',
-    },
-    {
-      icon: 'lucide:trending-down',
-      text: 'Track monthly expenses',
-      color: 'success',
-    },
-    {
-      icon: 'lucide:bar-chart-3',
-      text: 'Analyze spending patterns',
-      color: 'warning',
-    },
-    {
-      icon: 'lucide:target',
-      text: 'Set savings goals',
-      color: 'danger',
-    },
-    {
-      icon: 'lucide:credit-card',
-      text: 'Categorize transactions',
-      color: 'primary',
-    },
-  ];
-
-  const actions = [
-    {
-      key: 'rename',
-      label: 'Rename chat',
-      icon: 'lucide:edit-2',
-      color: 'primary',
-    },
-    {
-      key: 'archive',
-      label: 'Archive chat',
-      icon: 'lucide:archive',
-      color: 'secondary',
-    },
-    {
-      key: 'delete',
-      label: 'Delete chat',
-      icon: 'lucide:trash-2',
-      color: 'danger',
-    },
-  ];
+  // Modal state
+  const [isRenameModalOpen, setIsRenameModalOpen] = React.useState(false);
+  const [renamingChat, setRenamingChat] = React.useState<any>(null);
+  const [renameValue, setRenameValue] = React.useState('');
 
   const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      addMessage({
-        id: Date.now(),
-        text: newMessage,
-        sender: 'user',
-      });
+    if (newMessage.trim() && selectedChatId) {
+      sendMessage(newMessage);
       setNewMessage('');
-      setIsTyping(true);
-
-      // Simulate AI response delay
-      setTimeout(() => {
-        setIsTyping(false);
-      }, 2000);
     }
   };
 
   const handleNewChat = () => {
-    setSelectedChat('New Chat');
-    setSidebarOpen(false); // Close sidebar on mobile after new chat
+    createNewChat();
+    setSidebarOpen(false);
   };
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
+  };
+
+  const handleRenameClick = (chat: any) => {
+    setRenamingChat(chat);
+    setRenameValue(chat.title);
+    setIsRenameModalOpen(true);
+  };
+
+  const handleRenameSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (
+      renameValue.trim() &&
+      renameValue !== renamingChat?.title &&
+      renamingChat
+    ) {
+      renameChat(renamingChat.id, renameValue.trim());
+    }
+    setIsRenameModalOpen(false);
+    setRenamingChat(null);
+    setRenameValue('');
+  };
+
+  const handleRenameCancel = () => {
+    setIsRenameModalOpen(false);
+    setRenamingChat(null);
+    setRenameValue('');
   };
 
   return (
@@ -199,6 +123,70 @@ export default function ChatPage() {
           onClick={() => setSidebarOpen(false)}
         />
       )}
+
+      {/* Rename Modal */}
+      <Modal
+        isOpen={isRenameModalOpen}
+        onClose={handleRenameCancel}
+        placement='center'
+        backdrop='blur'
+        classNames={{
+          backdrop:
+            'bg-gradient-to-t from-zinc-900 to-zinc-900/10 backdrop-opacity-20',
+        }}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <Form onSubmit={handleRenameSubmit}>
+              <ModalHeader className='flex flex-col gap-1'>
+                <div className='flex items-center gap-2'>
+                  <Icon icon='lucide:edit-2' className='text-primary' />
+                  <span>Rename Chat</span>
+                </div>
+              </ModalHeader>
+              <ModalBody className='w-full'>
+                <Input
+                  autoFocus
+                  label='Chat Name'
+                  placeholder='Enter new chat name'
+                  value={renameValue}
+                  onValueChange={setRenameValue}
+                  variant='bordered'
+                  className='w-full'
+                  classNames={{
+                    inputWrapper:
+                      'w-full border-primary/40 focus-within:border-primary',
+                  }}
+                  startContent={
+                    <Icon
+                      icon='lucide:message-square'
+                      className='text-default-400'
+                    />
+                  }
+                />
+              </ModalBody>
+              <ModalFooter>
+                <Button
+                  color='danger'
+                  variant='light'
+                  onPress={handleRenameCancel}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  color='primary'
+                  type='submit'
+                  isDisabled={
+                    !renameValue.trim() || renameValue === renamingChat?.title
+                  }
+                >
+                  Rename
+                </Button>
+              </ModalFooter>
+            </Form>
+          )}
+        </ModalContent>
+      </Modal>
 
       {/* Enhanced Sidebar */}
       <Card
@@ -232,16 +220,31 @@ export default function ChatPage() {
 
             {/* Search Input */}
             <Input
+              isClearable
+              startContent={<Search className='text-gray-400 w-5 h-5' />}
+              type='text'
               placeholder='Search conversations...'
-              startContent={
-                <Icon icon='lucide:search' className='text-default-400' />
-              }
-              variant='bordered'
-              size='sm'
-              radius='lg'
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               classNames={{
-                inputWrapper:
-                  'border-divider/50 bg-content2/50 backdrop-blur-sm hover:bg-content2/80 transition-all',
+                label: 'text-black/50 dark:text-white/90',
+                input: [
+                  'bg-transparent',
+                  'text-black/90 dark:text-white/90',
+                  'placeholder:text-default-700/50 dark:placeholder:text-white/60',
+                ],
+                innerWrapper: 'bg-transparent',
+                inputWrapper: [
+                  'bg-default-200/50',
+                  'dark:bg-default/60',
+                  'backdrop-blur-xl',
+                  'backdrop-saturate-200',
+                  'hover:bg-default-200/70',
+                  'dark:hover:bg-default/70',
+                  'group-data-[focus=true]:bg-default-200/50',
+                  'dark:group-data-[focus=true]:bg-default/60',
+                  '!cursor-text',
+                ],
               }}
             />
 
@@ -272,72 +275,92 @@ export default function ChatPage() {
             <div className='flex-1 overflow-hidden'>
               <ScrollShadow
                 hideScrollBar
-                className='overflow-y-auto w-full h-[calc(100vh-10rem)] md:h-auto' // Hapus px-2
-                style={{ maxHeight: 'calc(100vh - 10rem)' }}
+                className='overflow-y-auto w-[300px] h-[600px]'
               >
                 <div className='space-y-2'>
-                  {chatHistory.map((chat) => (
-                    <div key={chat.id} className='relative group'>
-                      <Card
-                        isPressable
-                        className='w-full p-0 transition-all duration-200 bg-content2/50 hover:bg-content2/80 hover:shadow-lg shadow-none' // Hapus md:w-[calc(100% - 1rem)]
-                        onPress={() => {
-                          setSelectedChat(chat.title);
-                          setSidebarOpen(false); // Close sidebar on mobile
-                        }}
-                        radius='md'
-                      >
-                        <CardBody className='py-2 px-4 relative'>
-                          <div className='flex items-center justify-between'>
-                            <div className='flex items-center gap-2 w-full'>
-                              <div className='w-full'>
-                                <h4 className='text-sm font-medium truncate max-w-full block'>
-                                  {chat.title}
-                                </h4>
+                  {chatHistory
+                    .filter((chat) =>
+                      chat.title.toLowerCase().includes(search.toLowerCase()),
+                    )
+                    .slice()
+                    .reverse()
+                    .map((chat) => (
+                      <div key={chat.id} className='relative group'>
+                        <Card
+                          isPressable
+                          className='w-full p-0 transition-all duration-200 bg-content2/50 hover:bg-content2/80 hover:shadow-lg shadow-none'
+                          onPress={() => {
+                            setSelectedChat(chat.title);
+                            setSelectedChatId(chat.id);
+                            setSidebarOpen(false);
+                          }}
+                          radius='md'
+                        >
+                          <CardBody className='py-2 px-4 relative'>
+                            <div className='flex items-center justify-between'>
+                              <div className='flex items-center gap-2 w-full'>
+                                <div className='w-full flex items-center gap-2'>
+                                  <h4 className='text-sm font-medium truncate max-w-full block'>
+                                    {chat.title}
+                                  </h4>
+                                  {chat.archived && (
+                                    <span className='text-xs text-warning-600 bg-warning-100 rounded px-2 py-0.5 ml-1'>
+                                      Archived
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          {/* Action Dropdown absolutely positioned, not inside Card/Button */}
-                          <div className='absolute right-2 top-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10'>
-                            <Dropdown placement='bottom-end'>
-                              <DropdownTrigger>
-                                <span
-                                  tabIndex={0}
-                                  role='button'
-                                  aria-label='Open chat actions'
-                                  onClick={(e) => e.stopPropagation()}
-                                  className='min-w-6 w-6 h-6 bg-content1/80 backdrop-blur-sm rounded-full flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary'
-                                >
-                                  <Icon
-                                    icon='lucide:more-horizontal'
-                                    className='text-xs'
-                                  />
-                                </span>
-                              </DropdownTrigger>
-                              <DropdownMenu
-                                aria-label='Chat actions'
-                                closeOnSelect
-                                className='bg-content1/95 rounded-lg p-1 min-w-[140px] border border-divider/20 block md:absolute md:left-0 md:top-full'
-                                items={actions}
-                              >
-                                {actions.map((action) => (
-                                  <DropdownItem
-                                    key={action.key}
-                                    startContent={
-                                      <Icon icon={`${action.icon}`} />
-                                    }
-                                    className={`text-sm text-${action.color}-600 hover:bg-${action.color}-100`}
+                            {/* Action Dropdown absolutely positioned, not inside Card/Button */}
+                            <div className='absolute right-2 top-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10'>
+                              <Dropdown placement='bottom-end'>
+                                <DropdownTrigger>
+                                  <span
+                                    tabIndex={0}
+                                    role='button'
+                                    aria-label='Open chat actions'
+                                    onClick={(e) => e.stopPropagation()}
+                                    className='min-w-6 w-6 h-6 bg-content1/80 backdrop-blur-sm rounded-full flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary'
                                   >
-                                    {action.label}
-                                  </DropdownItem>
-                                ))}
-                              </DropdownMenu>
-                            </Dropdown>
-                          </div>
-                        </CardBody>
-                      </Card>
-                    </div>
-                  ))}
+                                    <Icon
+                                      icon='lucide:more-horizontal'
+                                      className='text-xs'
+                                    />
+                                  </span>
+                                </DropdownTrigger>
+                                <DropdownMenu
+                                  aria-label='Chat actions'
+                                  closeOnSelect
+                                  className='bg-content1/95 rounded-lg p-1 min-w-[140px] border border-divider/20 block md:absolute md:left-0 md:top-full'
+                                  items={actions}
+                                  onAction={async (key) => {
+                                    if (key === 'delete') {
+                                      deleteChat(chat.id);
+                                    } else if (key === 'rename') {
+                                      handleRenameClick(chat);
+                                    } else if (key === 'archive') {
+                                      archiveChat(chat.id);
+                                    }
+                                  }}
+                                >
+                                  {actions.map((action) => (
+                                    <DropdownItem
+                                      key={action.key}
+                                      startContent={
+                                        <Icon icon={`${action.icon}`} />
+                                      }
+                                      className={`text-sm text-${action.color}-600 hover:bg-${action.color}-100`}
+                                    >
+                                      {action.label}
+                                    </DropdownItem>
+                                  ))}
+                                </DropdownMenu>
+                              </Dropdown>
+                            </div>
+                          </CardBody>
+                        </Card>
+                      </div>
+                    ))}
                 </div>
               </ScrollShadow>
             </div>
@@ -371,7 +394,7 @@ export default function ChatPage() {
           hideScrollBar
           className='flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-content2/50 backdrop-blur-sm'
         >
-          {messages.length === 0 ? (
+          {(chatMessagesById[selectedChatId]?.length ?? 0) === 0 ? (
             <div className='flex flex-col items-center justify-center h-full text-center max-w-2xl mx-auto px-4'>
               <div className='relative mb-6 md:mb-8'>
                 <div className='w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-3xl flex items-center justify-center backdrop-blur-sm border border-divider/30 shadow-2xl'>
@@ -381,10 +404,7 @@ export default function ChatPage() {
                   />
                 </div>
                 <div className='absolute -top-2 -right-2 w-6 h-6 md:w-8 md:h-8 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center shadow-lg'>
-                  <Icon
-                    icon='lucide:sparkles'
-                    className='text-white text-xs md:text-sm bg-transparent'
-                  />
+                  <SparkleIcon />
                 </div>
               </div>
 
@@ -426,31 +446,21 @@ export default function ChatPage() {
             </div>
           ) : (
             <div className='space-y-4 md:space-y-6 max-w-4xl mx-auto w-full'>
-              {messages.map((message) => (
+              {chatMessagesById[selectedChatId]?.map((message: any) => (
                 <ChatMessage key={message.id} message={message} />
               ))}
               {isTyping && (
                 <div className='flex items-center gap-3 px-2 md:px-4'>
                   <Avatar
-                    size='sm'
-                    className='bg-gradient-to-br from-primary to-secondary'
-                    name='LA'
-                  />
-                  <Card className='bg-content2/80 backdrop-blur-sm border-divider/30'>
-                    <CardBody className='py-2 md:py-3 px-3 md:px-4'>
-                      <div className='flex items-center gap-1'>
-                        <div className='w-2 h-2 bg-primary rounded-full animate-bounce' />
-                        <div
-                          className='w-2 h-2 bg-primary rounded-full animate-bounce'
-                          style={{ animationDelay: '0.1s' }}
-                        />
-                        <div
-                          className='w-2 h-2 bg-primary rounded-full animate-bounce'
-                          style={{ animationDelay: '0.2s' }}
-                        />
-                      </div>
-                    </CardBody>
-                  </Card>
+                    name='Fin-AI'
+                    size='md'
+                    className='bg-gradient-to-r from-primary to-secondary text-primary-foreground'
+                  >
+                    <Icon icon='lucide:robot' className='text-lg' />
+                  </Avatar>
+                  <span className='text-sm text-default-500'>
+                    Fin-AI is typing...
+                  </span>
                 </div>
               )}
             </div>
