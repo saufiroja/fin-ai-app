@@ -10,6 +10,7 @@ import {
 } from '@heroui/table';
 import { Chip } from '@heroui/chip';
 import { Tooltip } from '@heroui/tooltip';
+import { Skeleton } from '@heroui/skeleton';
 import {
   Search,
   Plus,
@@ -37,6 +38,8 @@ import {
   PaginationItem,
   PaginationCursor,
 } from '@heroui/pagination';
+import NextLink from 'next/link';
+import Loading from './loading';
 
 // Mock data to simulate your existing data structure
 const dummyCategories = [
@@ -68,6 +71,7 @@ export default function TransactionPage() {
   const [category, setCategory] = useState('');
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [isMobile, setIsMobile] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState<{ start: any; end: any } | null>(
     null,
   );
@@ -86,6 +90,17 @@ export default function TransactionPage() {
   useEffect(() => {
     if (isMobile) setViewMode('card');
   }, [isMobile]);
+
+  // Simulate data loading
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setIsLoading(false);
+    };
+    loadData();
+  }, []);
 
   const filteredTransactions = useMemo(() => {
     let txs = allTransactions;
@@ -145,6 +160,11 @@ export default function TransactionPage() {
 
   const totalPages = Math.ceil(filteredTransactions.length / pageSize);
 
+  // Show loading skeleton while data is being fetched
+  if (isLoading) {
+    return <Loading />;
+  }
+
   return (
     <div className='min-h-screen w-full'>
       <div className='max-w-7xl mx-auto p-6'>
@@ -161,10 +181,12 @@ export default function TransactionPage() {
                 <Download className='w-4 h-4' />
                 Export
               </Button>
-              <Button className='flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105'>
-                <Plus className='w-4 h-4' />
-                Add Transaction
-              </Button>
+              <NextLink href='/transaction/add'>
+                <Button className='flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105'>
+                  <Plus className='w-4 h-4' />
+                  Add Transaction
+                </Button>
+              </NextLink>
             </div>
           </div>
 
@@ -366,14 +388,18 @@ export default function TransactionPage() {
                         <TableCell>
                           <div className='flex gap-2'>
                             <Tooltip content='View'>
-                              <button className='p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg transition-colors duration-150'>
-                                <Eye className='w-4 h-4' />
-                              </button>
+                              <NextLink href={`/transaction/view/${tx.id}`}>
+                                <button className='p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg transition-colors duration-150'>
+                                  <Eye className='w-4 h-4' />
+                                </button>
+                              </NextLink>
                             </Tooltip>
                             <Tooltip content='Edit'>
-                              <button className='p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg transition-colors duration-150'>
-                                <Edit3 className='w-4 h-4' />
-                              </button>
+                              <NextLink href={`/transaction/update/${tx.id}`}>
+                                <button className='p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg transition-colors duration-150'>
+                                  <Edit3 className='w-4 h-4' />
+                                </button>
+                              </NextLink>
                             </Tooltip>
                             <Tooltip content='Delete'>
                               <button className='p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors duration-150'>
