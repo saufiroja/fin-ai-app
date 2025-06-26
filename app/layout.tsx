@@ -48,7 +48,7 @@ export default function RootLayout({
               className={clsx(
                 'container mx-auto max-w-7xl flex-grow',
                 // Responsive padding and width for mobile
-                'px-2 sm:px-4 md:px-6',
+                'px-2 sm:px-4 md:px-6 mt-4',
                 'w-full',
               )}
             >

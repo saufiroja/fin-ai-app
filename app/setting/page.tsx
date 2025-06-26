@@ -11,6 +11,7 @@ import { Select, SelectItem } from '@heroui/select';
 import { Textarea } from '@heroui/input';
 import { Chip } from '@heroui/chip';
 import { User, Mail, Lock, Bell, Globe, Shield, Camera } from 'lucide-react';
+import { ThemeSwitch } from '@/components/theme-switch';
 
 export default function SettingPage() {
   const [formData, setFormData] = useState({
@@ -59,15 +60,8 @@ export default function SettingPage() {
   ];
 
   return (
-    <div className='flex justify-center items-start min-h-screen py-8 px-4'>
+    <div className='flex justify-center items-start'>
       <div className='w-full max-w-4xl'>
-        <div className='mb-8 text-center'>
-          <h1 className={title({ size: 'lg' })}>Account Settings</h1>
-          <p className='text-default-500 mt-2'>
-            Manage your account preferences and security settings
-          </p>
-        </div>
-
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
           {/* Navigation Tabs */}
           <Card className='lg:col-span-1 h-fit'>
@@ -380,7 +374,7 @@ export default function SettingPage() {
                             Use dark theme across the application
                           </p>
                         </div>
-                        <Switch />
+                        <ThemeSwitch />
                       </div>
                     </div>
                   </div>

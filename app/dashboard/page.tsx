@@ -86,43 +86,51 @@ export default function DashboardPage() {
         </div>
         <Card>
           <CardBody>
-            <ul className='divide-y divide-gray-200'>
-              {transactions.map((item) => (
-                <li
-                  key={item.id}
-                  className='py-2 flex justify-between items-center'
-                >
-                  <div>
-                    <span>{item.desc}</span>
-                    <div className='text-xs text-gray-400'>
-                      {(() => {
-                        const today = new Date();
-                        const itemDate = new Date(item.date);
-                        const diffTime = today.getTime() - itemDate.getTime();
-                        const diffDays = Math.floor(
-                          diffTime / (1000 * 60 * 60 * 24),
-                        );
-
-                        if (diffDays === 0) return 'Hari ini';
-                        if (diffDays === 1) return 'Kemarin';
-                        if (diffDays > 1) return `${diffDays} hari yang lalu`;
-                        return item.date;
-                      })()}
-                    </div>
-                  </div>
-                  <span
-                    className={
-                      item.type === 'Pemasukan'
-                        ? 'text-green-600'
-                        : 'text-red-600'
-                    }
+            {transactions.length === 0 ? (
+              <div className='text-center py-8'>
+                <div className='text-gray-400 text-sm'>
+                  No transactions in the last 7 days
+                </div>
+              </div>
+            ) : (
+              <ul className='divide-y divide-gray-200'>
+                {transactions.map((item) => (
+                  <li
+                    key={item.id}
+                    className='py-2 flex justify-between items-center'
                   >
-                    {item.type === 'Pemasukan' ? '+' : '-'}Rp{' '}
-                    {item.amount.toLocaleString('id-ID')}
-                  </span>
-                </li>
-              ))}
-            </ul>
+                    <div>
+                      <span>{item.desc}</span>
+                      <div className='text-xs text-gray-400'>
+                        {(() => {
+                          const today = new Date();
+                          const itemDate = new Date(item.date);
+                          const diffTime = today.getTime() - itemDate.getTime();
+                          const diffDays = Math.floor(
+                            diffTime / (1000 * 60 * 60 * 24),
+                          );
+
+                          if (diffDays === 0) return 'Hari ini';
+                          if (diffDays === 1) return 'Kemarin';
+                          if (diffDays > 1) return `${diffDays} hari yang lalu`;
+                          return item.date;
+                        })()}
+                      </div>
+                    </div>
+                    <span
+                      className={
+                        item.type === 'Pemasukan'
+                          ? 'text-green-600'
+                          : 'text-red-600'
+                      }
+                    >
+                      {item.type === 'Pemasukan' ? '+' : '-'}Rp{' '}
+                      {item.amount.toLocaleString('id-ID')}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </CardBody>
         </Card>
       </div>

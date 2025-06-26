@@ -114,6 +114,19 @@ export default function ChatPage() {
     setRenameValue('');
   };
 
+  useEffect(() => {
+    // Saat halaman chat dibuka, cek apakah ada chat terakhir yang dipilih di localStorage
+    if (typeof window !== 'undefined') {
+      const lastId = localStorage.getItem('lastSelectedChatId');
+      if (lastId && chatHistory.some((c: any) => String(c.id) === lastId)) {
+        setSelectedChatId(Number(lastId));
+        const found = chatHistory.find((c: any) => String(c.id) === lastId);
+        if (found) setSelectedChat(found.title);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatHistory]);
+
   return (
     <div className='flex h-[calc(100vh-2rem)] md:h-[calc(93vh-2rem)] bg-gradient-to-br from-background to-content1 rounded-none md:rounded-3xl overflow-hidden shadow-2xl relative'>
       {/* Mobile Overlay */}
@@ -226,6 +239,7 @@ export default function ChatPage() {
               placeholder='Search conversations...'
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onClear={() => setSearch('')}
               classNames={{
                 label: 'text-black/50 dark:text-white/90',
                 input: [
@@ -293,6 +307,19 @@ export default function ChatPage() {
                             setSelectedChat(chat.title);
                             setSelectedChatId(chat.id);
                             setSidebarOpen(false);
+                            // Simpan chat yang dipilih ke localStorage agar bisa diingat saat reload
+                            if (typeof window !== 'undefined') {
+                              localStorage.setItem(
+                                'lastSelectedChatId',
+                                String(chat.id),
+                              );
+                            }
+                            setTimeout(() => {
+                              const textarea = document.querySelector(
+                                'textarea[placeholder="Ask me anything about finance..."]',
+                              ) as HTMLTextAreaElement;
+                              if (textarea) textarea.focus();
+                            }, 200);
                           }}
                           radius='md'
                         >

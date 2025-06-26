@@ -214,6 +214,7 @@ export default function TransactionPage() {
                   placeholder='Search transactions...'
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
+                  onClear={() => setSearch('')}
                   classNames={{
                     label: 'text-black/50 dark:text-white/90',
                     input: [
@@ -467,20 +468,6 @@ export default function TransactionPage() {
               />
             </div>
           </>
-        )}
-
-        {filteredTransactions.length === 0 && (
-          <div className='bg-white rounded-2xl p-12 shadow-lg border border-gray-100 text-center'>
-            <div className='w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-              <Search className='w-8 h-8 text-gray-400' />
-            </div>
-            <h3 className='text-lg font-semibold text-gray-900 mb-2'>
-              No transactions found
-            </h3>
-            <p className='text-gray-500'>
-              Try adjusting your search criteria or date range.
-            </p>
-          </div>
         )}
       </div>
     </div>

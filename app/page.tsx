@@ -11,6 +11,7 @@ import { PhotoUpload } from '@/components/photo-upload';
 import { Form } from '@heroui/form';
 import SparkleIcon from '@/components/sparkle-icon';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 
 export default function Home() {
   // Simulate user login (replace with real user context if available)
@@ -27,37 +28,131 @@ export default function Home() {
     'Keuangan sehat, hidup pun tenang.',
     'Yuk, capai tujuan finansialmu bersama FinAI!',
   ];
+
   const [randomSubtitle, setRandomSubtitle] = React.useState(subtitles[0]);
   const { addMessage } = useChatMessages();
   const [newMessage, setNewMessage] = React.useState('');
   const [activeTab, setActiveTab] = React.useState('chat');
+  const [isLoading, setIsLoading] = React.useState(false);
   const router = useRouter();
 
   React.useEffect(() => {
     setRandomSubtitle(subtitles[Math.floor(Math.random() * subtitles.length)]);
   }, []);
-  const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      // Simpan pesan ke localStorage untuk diambil di /chat
-      localStorage.setItem('pendingMessage', newMessage);
+
+  const handleSendMessage = async () => {
+    if (newMessage.trim() && !isLoading) {
+      setIsLoading(true);
+      // --- Create a new chat and store message for /chat page ---
+      // Get current chat history from localStorage
+      const getChatHistory = () => {
+        const raw =
+          typeof window !== 'undefined'
+            ? localStorage.getItem('chatHistory')
+            : null;
+        return raw ? JSON.parse(raw) : [];
+      };
+      const addChatHistory = (title: string) => {
+        const history = getChatHistory();
+        const id = Date.now();
+        const newChat = { id, title, archived: false };
+        const updated = [...history, newChat];
+        localStorage.setItem('chatHistory', JSON.stringify(updated));
+        return newChat;
+      };
+      // Generate unique chat title
+      const title = newMessage;
+      const newChat = addChatHistory(title);
+      // Store the message under the new chat's ID
+      const chatMessagesById =
+        typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('chatMessagesById') || '{}')
+          : {};
+      chatMessagesById[newChat.id] = [
+        { id: Date.now(), text: newMessage, sender: 'user' },
+      ];
+      localStorage.setItem(
+        'chatMessagesById',
+        JSON.stringify(chatMessagesById),
+      );
+      // Store the new chat id for /chat page to auto-select
+      localStorage.setItem('pendingChatId', String(newChat.id));
       setNewMessage('');
-      router.push('/chat');
+      setTimeout(() => {
+        router.push('/chat');
+        setIsLoading(false);
+      }, 300);
     }
   };
+
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0 },
+  };
+
   return (
-    <section className='flex flex-col items-center justify-center gap-4 py-8 md:py-10 bg-background'>
-      {/* Personalized greeting if user is logged in */}
-      {user && (
-        <div className='text-lg font-semibold text-default-700 dark:text-gray-200'>
-          Halo, {user.name}! 👋
+    <motion.section
+      className='flex flex-col items-center justify-center gap-8 py-12 px-4'
+      variants={containerVariants}
+      initial='hidden'
+      animate='visible'
+    >
+      {/* Header Section */}
+      <motion.div
+        className='flex flex-col items-center gap-6 text-center max-w-2xl'
+        variants={itemVariants}
+      >
+        {/* Logo or Brand */}
+        <div className='relative'>
+          <div className='w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg'>
+            <Icon icon='lucide:brain-circuit' className='w-8 h-8 text-white' />
+          </div>
+          <div className='absolute -top-1 -right-1 w-6 h-6 bg-success rounded-full flex items-center justify-center'>
+            <Icon icon='lucide:sparkles' className='w-3 h-3 text-white' />
+          </div>
         </div>
-      )}
-      <div className='inline-block max-w-xl text-center justify-center'>
-        <div className={subtitle()}>{randomSubtitle}</div>
-      </div>
-      {/* Switch Tabs for Upload Struk & Chat */}
-      <div className='w-full max-w-2xl'>
-        <Card className='w-full p-0' shadow='md'>
+
+        {/* Personalized Greeting */}
+        {user && (
+          <motion.div
+            className='text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent'
+            variants={itemVariants}
+          >
+            Halo, {user.name}! 👋
+          </motion.div>
+        )}
+
+        {/* Dynamic Subtitle */}
+        <motion.div
+          className={`${subtitle()} text-lg leading-relaxed text-default-600 dark:text-default-400`}
+          variants={itemVariants}
+          key={randomSubtitle} // This will trigger re-animation on subtitle change
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {randomSubtitle}
+        </motion.div>
+      </motion.div>
+
+      {/* Main Interaction Card */}
+      <motion.div className='w-full max-w-2xl' variants={itemVariants}>
+        <Card
+          className='backdrop-blur-sm bg-background/80 border border-divider shadow-xl'
+          shadow='none'
+        >
           <Form
             onSubmit={(e) => {
               e.preventDefault();
@@ -65,78 +160,163 @@ export default function Home() {
                 handleSendMessage();
               }
             }}
-            className='flex flex-col gap-0'
+            className='flex flex-col'
           >
-            <Tabs
-              selectedKey={activeTab}
-              onSelectionChange={(key) => setActiveTab(String(key))}
-              className='px-6 pt-6'
-              variant='bordered'
-            >
-              <Tab
-                key='chat'
-                title={
-                  <div className='flex items-center gap-1'>
-                    <Icon
-                      icon='lucide:message-circle'
-                      className='w-4 h-4 text-blue-500'
-                    />
-                    <span>Chat</span>
-                  </div>
-                }
-              />
-              <Tab
-                key='scan'
-                title={
-                  <div className='flex items-center gap-1'>
-                    <Icon
-                      icon='lucide:scan-line'
-                      className='w-4 h-4 text-green-500'
-                    />
-                    <span>Scan Receipt</span>
-                  </div>
-                }
-              />
-            </Tabs>
-            <CardBody className='p-6 pt-4'>
+            {/* Enhanced Tabs */}
+            <div className='px-6 pt-6 pb-2'>
+              <Tabs
+                selectedKey={activeTab}
+                onSelectionChange={(key) => setActiveTab(String(key))}
+                variant='underlined'
+                classNames={{
+                  tabList:
+                    'gap-6 w-full relative rounded-none p-0 border-b border-divider',
+                  cursor: 'w-full bg-primary',
+                  tab: 'max-w-fit px-0 h-12',
+                  tabContent: 'group-data-[selected=true]:text-primary',
+                }}
+              >
+                <Tab
+                  key='chat'
+                  title={
+                    <div className='flex items-center gap-2 px-2'>
+                      <div className='p-1.5 rounded-lg bg-primary/10 group-data-[selected=true]:bg-primary/20 transition-colors'>
+                        <Icon
+                          icon='lucide:message-circle'
+                          className='w-4 h-4 text-primary'
+                        />
+                      </div>
+                      <span className='font-medium'>Chat dengan AI</span>
+                    </div>
+                  }
+                />
+                <Tab
+                  key='scan'
+                  title={
+                    <div className='flex items-center gap-2 px-2'>
+                      <div className='p-1.5 rounded-lg bg-success/10 group-data-[selected=true]:bg-success/20 transition-colors'>
+                        <Icon
+                          icon='lucide:scan-line'
+                          className='w-4 h-4 text-success'
+                        />
+                      </div>
+                      <span className='font-medium'>Scan Struk</span>
+                    </div>
+                  }
+                />
+              </Tabs>
+            </div>
+
+            <CardBody className='p-6'>
               {activeTab === 'chat' ? (
-                <div className='flex flex-col w-full'>
-                  {/* Chat messages would go here */}
-                  <div className='flex-1' />
-                  <div className='pt-2'>
-                    <Textarea
-                      placeholder='write your message here...'
-                      startContent={<SparkleIcon />}
-                      onKeyDown={(e) =>
-                        e.key === 'Enter' && !e.shiftKey && handleSendMessage()
+                <motion.div
+                  className='flex flex-col gap-4'
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {/* Quick Action Buttons */}
+                  <div className='grid grid-cols-2 gap-3 mb-4'>
+                    <Button
+                      variant='flat'
+                      color='primary'
+                      className='h-auto p-4 justify-start'
+                      startContent={
+                        <Icon icon='lucide:pie-chart' className='w-5 h-5' />
                       }
+                    >
+                      <div className='text-left'>
+                        <div className='font-medium text-sm'>
+                          Analisis Keuangan
+                        </div>
+                        <div className='text-xs opacity-70'>
+                          Lihat ringkasan pengeluaran
+                        </div>
+                      </div>
+                    </Button>
+                    <Button
+                      variant='flat'
+                      color='success'
+                      className='h-auto p-4 justify-start'
+                      startContent={
+                        <Icon icon='lucide:target' className='w-5 h-5' />
+                      }
+                    >
+                      <div className='text-left'>
+                        <div className='font-medium text-sm'>Tips Menabung</div>
+                        <div className='text-xs opacity-70'>
+                          Saran personal untukmu
+                        </div>
+                      </div>
+                    </Button>
+                  </div>
+
+                  {/* Enhanced Message Input */}
+                  <div className='relative'>
+                    <Textarea
+                      placeholder='Tanyakan apapun tentang keuanganmu...'
+                      startContent={
+                        <div className='p-1'>
+                          <SparkleIcon />
+                        </div>
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
                       onValueChange={setNewMessage}
                       value={newMessage}
-                      className='resize-none'
+                      minRows={3}
+                      maxRows={6}
+                      classNames={{
+                        input: 'text-medium',
+                        inputWrapper:
+                          'bg-default-50 border-2 border-transparent hover:border-primary/20 focus-within:border-primary/40 transition-colors shadow-sm',
+                      }}
                       endContent={
-                        <Button
-                          isIconOnly
-                          color='primary'
-                          variant='solid'
-                          type='submit'
-                          className='rounded-full shadow-md transition-transform hover:scale-110 active:scale-95 duration-150 bg-gradient-to-r from-primary to-secondary'
-                          aria-label='Send message'
-                        >
-                          <Icon icon='lucide:send' className='text-lg' />
-                        </Button>
+                        <div className='flex items-end pb-2'>
+                          <Button
+                            isIconOnly
+                            color='primary'
+                            variant='solid'
+                            type='submit'
+                            isLoading={isLoading}
+                            className='rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 duration-200 bg-gradient-to-r from-primary to-secondary min-w-12 h-12'
+                            aria-label='Send message'
+                          >
+                            {!isLoading && (
+                              <Icon icon='lucide:send' className='w-5 h-5' />
+                            )}
+                          </Button>
+                        </div>
                       }
                     />
                   </div>
-                </div>
+
+                  {/* Helper Text */}
+                  <div className='flex items-center gap-2 text-xs text-default-500 px-1'>
+                    <Icon icon='lucide:lightbulb' className='w-3 h-3' />
+                    <span>
+                      Tekan Enter untuk kirim, Shift+Enter untuk baris baru
+                    </span>
+                  </div>
+                </motion.div>
               ) : (
-                <div className='flex flex-col w-full'>
+                <motion.div
+                  className='flex flex-col w-full'
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
                   <PhotoUpload />
-                </div>
+                </motion.div>
               )}
             </CardBody>
           </Form>
         </Card>
-      </div>
-    </section>
+      </motion.div>
+    </motion.section>
   );
 }

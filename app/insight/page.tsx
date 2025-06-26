@@ -95,11 +95,11 @@ export default function InsightsPage() {
   };
 
   return (
-    <div className='min-h-screen bg-gradient-to-br to-blue-50 dark:to-default-950 p-6'>
+    <div className='min-h-screen p-6'>
       <div className='max-w-4xl mx-auto space-y-6'>
         {/* Header */}
         <div className='text-center mb-8'>
-          <h1 className='text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2'>
+          <h1 className='text-4xl font-bold mb-2'>
             AI Insights & Rekomendasi
           </h1>
           <p className='dark:text-gray-200'>
@@ -108,13 +108,13 @@ export default function InsightsPage() {
         </div>
 
         {/* Tips Card at the top */}
-        <Card className='bg-gradient-to-r from-blue-600 to-purple-600 text-white'>
+        <Card className='dark:text-gray-200'>
           <CardBody className='text-center py-6'>
             <div className='flex items-center justify-center gap-2 mb-2'>
               <Lightbulb className='w-5 h-5' />
               <h3 className='text-lg font-semibold'>Tips Hari Ini</h3>
             </div>
-            <p className='text-blue-100'>
+            <p className='dark:text-gray-300 leading-relaxed'>
               Gunakan metode 50/30/20: 50% kebutuhan, 30% keinginan, 20%
               tabungan untuk keuangan yang seimbang.
             </p>
@@ -261,14 +261,6 @@ export default function InsightsPage() {
                         </Chip>
                       ))}
                     </div>
-                    <Button
-                      color='primary'
-                      variant='flat'
-                      size='sm'
-                      className='w-full mt-3'
-                    >
-                      Lihat Promo Lengkap
-                    </Button>
                   </div>
                 )}
               </CardBody>
