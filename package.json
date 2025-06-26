@@ -53,6 +53,7 @@
     "@eslint/eslintrc": "3.3.1",
     "@eslint/js": "9.25.1",
     "@iconify/react": "^6.0.0",
+    "@netlify/next": "^1.4.9",
     "@next/eslint-plugin-next": "15.3.1",
     "@react-types/shared": "3.30.0",
     "@types/node": "22.15.3",
