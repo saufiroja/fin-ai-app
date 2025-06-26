@@ -160,7 +160,6 @@ export default function ChatPage() {
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <Button
-          isIconOnly
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
           onPress={() => setSidebarOpen(false)}
         />
@@ -328,9 +327,9 @@ export default function ChatPage() {
                     .reverse()
                     .map((chat) => (
                       <div key={chat.id} className="relative group">
-                        <Button
+                        <button
                           className="w-full p-0 transition-all duration-200 bg-content2/50 hover:bg-content2/80 hover:shadow-lg shadow-none rounded-md cursor-pointer text-left border-none"
-                          onPress={() => {
+                          onClick={() => {
                             setSelectedChat(chat.title);
                             setSelectedChatId(chat.id);
                             setSidebarOpen(false);
@@ -412,7 +411,7 @@ export default function ChatPage() {
                               </Dropdown>
                             </div>
                           </div>
-                        </Button>
+                        </button>
                       </div>
                     ))}
                 </div>
