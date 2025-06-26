@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardBody, CardHeader } from '@heroui/card';
 import { Button } from '@heroui/button';
 import { Chip } from '@heroui/chip';
@@ -14,62 +14,115 @@ import {
   Calendar,
   DollarSign,
 } from 'lucide-react';
+import Loading from './loading';
+import NextLink from 'next/link';
+
+interface Insight {
+  id: number;
+  type: string;
+  title: string;
+  icon: React.ReactNode;
+  iconColor: string;
+  content: string;
+  trend?: string;
+  percentage?: string;
+  amount?: string;
+  category?: string;
+  progress?: number;
+  currentAmount?: string;
+  targetAmount?: string;
+  projectedExcess?: string;
+  usedAmount?: string;
+  totalBudget?: string;
+  daysLeft?: number;
+  status?: string;
+  savings?: string;
+  store?: string;
+  deals?: string[];
+}
 
 export default function InsightsPage() {
-  const insights = [
-    {
-      id: 1,
-      type: 'analysis',
-      title: 'Analisis Pengeluaran Minggu Ini',
-      icon: <TrendingUp className='w-5 h-5' />,
-      iconColor: 'bg-blue-500',
-      content:
-        'Pengeluaran Anda minggu ini naik 15% dibanding minggu lalu (Rp 425.000 vs Rp 370.000). Peningkatan terbesar ada pada kategori Makanan & Minuman. Disarankan untuk lebih sering masak di rumah untuk 3 hari ke depan.',
-      trend: 'up',
-      percentage: '15%',
-      amount: 'Rp 425.000',
-      category: 'Makanan & Minuman',
-    },
-    {
-      id: 2,
-      type: 'target',
-      title: 'Target Tabungan Bulan Ini',
-      icon: <Target className='w-5 h-5' />,
-      iconColor: 'bg-green-500',
-      content:
-        'Selamat! Anda sudah mencapai 78% dari target tabungan bulan ini (Rp 1.560.000 dari Rp 2.000.000). Dengan pola pengeluaran saat ini, Anda akan melampaui target sebesar 12% di akhir bulan.',
-      progress: 78,
-      currentAmount: 'Rp 1.560.000',
-      targetAmount: 'Rp 2.000.000',
-      projectedExcess: '12%',
-    },
-    {
-      id: 3,
-      type: 'alert',
-      title: 'Alert: Budget Entertainment',
-      icon: <AlertTriangle className='w-5 h-5' />,
-      iconColor: 'bg-orange-500',
-      content:
-        'Budget entertainment Anda sudah terpakai 85% (Rp 340.000 dari Rp 400.000) padahal masih ada 12 hari lagi. Pertimbangkan aktivitas free/murah seperti jogging di taman atau nonton film di rumah.',
-      progress: 85,
-      usedAmount: 'Rp 340.000',
-      totalBudget: 'Rp 400.000',
-      daysLeft: 12,
-      status: 'warning',
-    },
-    {
-      id: 4,
-      type: 'recommendation',
-      title: 'Smart Recommendation',
-      icon: <Lightbulb className='w-5 h-5' />,
-      iconColor: 'bg-yellow-500',
-      content:
-        'Berdasarkan pola belanja Anda, ada promo di Superindo untuk produk yang sering Anda beli: Susu Ultra (diskon 20%), Telur (buy 2 get 1). Estimasi penghematan: Rp 45.000 untuk belanja minggu depan.',
-      savings: 'Rp 45.000',
-      store: 'Superindo',
-      deals: ['Susu Ultra (diskon 20%)', 'Telur (buy 2 get 1)'],
-    },
-  ];
+  const [isLoading, setIsLoading] = useState(true);
+  const [insights, setInsights] = useState<Insight[]>([]);
+
+  useEffect(() => {
+    // Simulate loading insight data
+    const loadInsightData = async () => {
+      try {
+        // Simulate AI analysis processing delay
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        // Load insights data
+        const insightData: Insight[] = [
+          {
+            id: 1,
+            type: 'analysis',
+            title: 'Analisis Pengeluaran Minggu Ini',
+            icon: <TrendingUp className='w-5 h-5' />,
+            iconColor: 'bg-blue-500',
+            content:
+              'Pengeluaran Anda minggu ini naik 15% dibanding minggu lalu (Rp 425.000 vs Rp 370.000). Peningkatan terbesar ada pada kategori Makanan & Minuman. Disarankan untuk lebih sering masak di rumah untuk 3 hari ke depan.',
+            trend: 'up',
+            percentage: '15%',
+            amount: 'Rp 425.000',
+            category: 'Makanan & Minuman',
+          },
+          {
+            id: 2,
+            type: 'target',
+            title: 'Target Tabungan Bulan Ini',
+            icon: <Target className='w-5 h-5' />,
+            iconColor: 'bg-green-500',
+            content:
+              'Selamat! Anda sudah mencapai 78% dari target tabungan bulan ini (Rp 1.560.000 dari Rp 2.000.000). Dengan pola pengeluaran saat ini, Anda akan melampaui target sebesar 12% di akhir bulan.',
+            progress: 78,
+            currentAmount: 'Rp 1.560.000',
+            targetAmount: 'Rp 2.000.000',
+            projectedExcess: '12%',
+          },
+          {
+            id: 3,
+            type: 'alert',
+            title: 'Alert: Budget Entertainment',
+            icon: <AlertTriangle className='w-5 h-5' />,
+            iconColor: 'bg-orange-500',
+            content:
+              'Budget entertainment Anda sudah terpakai 85% (Rp 340.000 dari Rp 400.000) padahal masih ada 12 hari lagi. Pertimbangkan aktivitas free/murah seperti jogging di taman atau nonton film di rumah.',
+            progress: 85,
+            usedAmount: 'Rp 340.000',
+            totalBudget: 'Rp 400.000',
+            daysLeft: 12,
+            status: 'warning',
+          },
+          {
+            id: 4,
+            type: 'recommendation',
+            title: 'Smart Recommendation',
+            icon: <Lightbulb className='w-5 h-5' />,
+            iconColor: 'bg-yellow-500',
+            content:
+              'Berdasarkan pola belanja Anda, ada promo di Superindo untuk produk yang sering Anda beli: Susu Ultra (diskon 20%), Telur (buy 2 get 1). Estimasi penghematan: Rp 45.000 untuk belanja minggu depan.',
+            savings: 'Rp 45.000',
+            store: 'Superindo',
+            deals: ['Susu Ultra (diskon 20%)', 'Telur (buy 2 get 1)'],
+          },
+        ];
+
+        setInsights(insightData);
+      } catch (error) {
+        console.error('Error loading insight data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadInsightData();
+  }, []);
+
+  // Show loading skeleton
+  if (isLoading) {
+    return <Loading />;
+  }
 
   const getStatusColor = (type: any) => {
     switch (type) {
@@ -99,9 +152,7 @@ export default function InsightsPage() {
       <div className='max-w-4xl mx-auto space-y-6'>
         {/* Header */}
         <div className='text-center mb-8'>
-          <h1 className='text-4xl font-bold mb-2'>
-            AI Insights & Rekomendasi
-          </h1>
+          <h1 className='text-4xl font-bold mb-2'>AI Insights & Rekomendasi</h1>
           <p className='dark:text-gray-200'>
             Analisis cerdas untuk keuangan yang lebih baik
           </p>
@@ -122,12 +173,9 @@ export default function InsightsPage() {
         </Card>
 
         <div className='flex justify-end mb-4'>
-          <Button
-            color='primary'
-            onPress={() => alert('Add new insight feature coming soon!')}
-          >
-            + Add New Insight
-          </Button>
+          <NextLink href='/insight/add'>
+            <Button color='primary'>+ Add New Insight</Button>
+          </NextLink>
         </div>
 
         {/* Insights Cards */}

@@ -3,9 +3,10 @@ import { title } from '@/components/primitives';
 import { dummyResponseHistory, dummyResponseHistory2 } from '@/dummy/history';
 import { Card, CardHeader, CardBody } from '@heroui/card';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import StatisticsCard from '@/components/StatisticsCard';
 import { TrendingDown, TrendingUp } from 'lucide-react';
+import Loading from './loading';
 
 const summaryCards = [
   {
@@ -24,6 +25,15 @@ const summaryCards = [
     color: 'text-blue-500',
   },
 ];
+
+interface Transaction {
+  id: number;
+  type: string;
+  desc: string;
+  category: string;
+  amount: number;
+  date: string;
+}
 
 function getRecentTransactions() {
   const all = [...dummyResponseHistory.data, ...dummyResponseHistory2.data];
@@ -46,8 +56,34 @@ function getRecentTransactions() {
 }
 
 export default function DashboardPage() {
-  const transactions = getRecentTransactions();
+  const [isLoading, setIsLoading] = useState(true);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const router = useRouter();
+
+  useEffect(() => {
+    // Simulate loading dashboard data
+    const loadDashboardData = async () => {
+      try {
+        // Simulate API call delay
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
+        // Load transaction data
+        const recentTransactions = getRecentTransactions();
+        setTransactions(recentTransactions);
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, []);
+
+  // Show loading skeleton
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <div className='space-y-2'>

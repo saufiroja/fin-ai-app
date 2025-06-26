@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { title } from '@/components/primitives';
 import { Card, CardBody, CardHeader } from '@heroui/card';
 import { Input } from '@heroui/input';
@@ -12,8 +12,11 @@ import { Textarea } from '@heroui/input';
 import { Chip } from '@heroui/chip';
 import { User, Mail, Lock, Bell, Globe, Shield, Camera } from 'lucide-react';
 import { ThemeSwitch } from '@/components/theme-switch';
+import Loading from './loading';
 
 export default function SettingPage() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: 'John Doe',
     email: 'john.doe@example.com',
@@ -30,6 +33,25 @@ export default function SettingPage() {
 
   const [activeTab, setActiveTab] = useState('profile');
 
+  useEffect(() => {
+    // Simulate loading user settings
+    const loadSettings = async () => {
+      try {
+        // Simulate API call to fetch user settings
+        await new Promise((resolve) => setTimeout(resolve, 1200));
+
+        // Settings would be loaded from API here
+        console.log('Settings loaded');
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSettings();
+  }, []);
+
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -38,10 +60,21 @@ export default function SettingPage() {
     setNotifications((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', { formData, notifications });
-    // Handle form submission here
+    setIsSaving(true);
+
+    try {
+      // Simulate API call to save settings
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      console.log('Form submitted:', { formData, notifications });
+      // Handle form submission here
+    } catch (error) {
+      console.error('Error saving settings:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const languages = [
@@ -58,6 +91,11 @@ export default function SettingPage() {
     { key: 'UTC-5', label: 'UTC-5 (New York)' },
     { key: 'UTC+9', label: 'UTC+9 (Tokyo)' },
   ];
+
+  // Show loading skeleton
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <div className='flex justify-center items-start'>
@@ -381,11 +419,16 @@ export default function SettingPage() {
                 )}
 
                 <div className='flex justify-end gap-3 mt-8 pt-6 border-t border-default-200'>
-                  <Button variant='light' color='default'>
+                  <Button variant='light' color='default' disabled={isSaving}>
                     Cancel
                   </Button>
-                  <Button color='primary' type='submit'>
-                    Save Changes
+                  <Button
+                    color='primary'
+                    type='submit'
+                    isLoading={isSaving}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </div>
               </form>

@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardBody, CardHeader } from '@heroui/card';
 import { Avatar } from '@heroui/avatar';
 import {
@@ -25,6 +25,7 @@ import SparkleIcon from '@/components/sparkle-icon';
 import { suggestedPrompts } from '@/dummy/suggestedPrompts';
 import { Search } from 'lucide-react';
 import { useChatService } from '@/hooks/useChatService';
+import Loading from './loading';
 
 const actions = [
   {
@@ -66,16 +67,25 @@ export default function ChatPage() {
   const [newMessage, setNewMessage] = React.useState('');
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [search, setSearch] = React.useState('');
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
 
   // Modal state
   const [isRenameModalOpen, setIsRenameModalOpen] = React.useState(false);
   const [renamingChat, setRenamingChat] = React.useState<any>(null);
   const [renameValue, setRenameValue] = React.useState('');
 
-  const handleSendMessage = () => {
-    if (newMessage.trim() && selectedChatId) {
-      sendMessage(newMessage);
-      setNewMessage('');
+  const handleSendMessage = async () => {
+    if (newMessage.trim() && selectedChatId && !isSendingMessage) {
+      setIsSendingMessage(true);
+      try {
+        await sendMessage(newMessage);
+        setNewMessage('');
+      } catch (error) {
+        console.error('Error sending message:', error);
+      } finally {
+        setIsSendingMessage(false);
+      }
     }
   };
 
@@ -115,6 +125,16 @@ export default function ChatPage() {
   };
 
   useEffect(() => {
+    // Simulate initial loading for chat history and settings
+    const initializeChat = async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setIsInitialLoading(false);
+    };
+
+    initializeChat();
+  }, []);
+
+  useEffect(() => {
     // Saat halaman chat dibuka, cek apakah ada chat terakhir yang dipilih di localStorage
     if (typeof window !== 'undefined') {
       const lastId = localStorage.getItem('lastSelectedChatId');
@@ -126,6 +146,11 @@ export default function ChatPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatHistory]);
+
+  // Show loading skeleton during initial load
+  if (isInitialLoading) {
+    return <Loading />;
+  }
 
   return (
     <div className='flex h-[calc(100vh-2rem)] md:h-[calc(93vh-2rem)] bg-gradient-to-br from-background to-content1 rounded-none md:rounded-3xl overflow-hidden shadow-2xl relative'>
@@ -451,8 +476,17 @@ export default function ChatPage() {
                   <Card
                     key={index}
                     isPressable
+                    isDisabled={isSendingMessage}
                     className='p-3 md:p-4 hover:scale-105 transition-all duration-200 bg-content2/50 backdrop-blur-sm border-divider/30'
                     radius='lg'
+                    onPress={() => {
+                      if (!isSendingMessage) {
+                        setNewMessage(prompt.text);
+                        setTimeout(() => {
+                          handleSendMessage();
+                        }, 100);
+                      }
+                    }}
                   >
                     <div className='flex items-center gap-3'>
                       <div
@@ -500,9 +534,13 @@ export default function ChatPage() {
               placeholder='Ask me anything about finance...'
               value={newMessage}
               onValueChange={setNewMessage}
-              onKeyDown={(e: any) =>
-                e.key === 'Enter' && !e.shiftKey && handleSendMessage()
-              }
+              onKeyDown={(e: any) => {
+                if (e.key === 'Enter' && !e.shiftKey && !isSendingMessage) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              isDisabled={isSendingMessage}
               minRows={1}
               maxRows={5}
               radius='md'
@@ -520,10 +558,15 @@ export default function ChatPage() {
                   variant='solid'
                   type='submit'
                   size='md'
+                  isLoading={isSendingMessage}
+                  isDisabled={isSendingMessage || !newMessage.trim()}
                   className='rounded-full shadow-md transition-transform hover:scale-110 active:scale-95 duration-150 bg-gradient-to-r from-primary to-secondary'
                   aria-label='Send message'
+                  onPress={handleSendMessage}
                 >
-                  <Icon icon='lucide:send' className='text-md' />
+                  {!isSendingMessage && (
+                    <Icon icon='lucide:send' className='text-md' />
+                  )}
                 </Button>
               }
               classNames={{
