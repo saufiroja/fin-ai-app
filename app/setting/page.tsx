@@ -1,28 +1,29 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { title } from '@/components/primitives';
-import { Card, CardBody, CardHeader } from '@heroui/card';
-import { Input } from '@heroui/input';
-import { Button } from '@heroui/button';
-import { Avatar } from '@heroui/avatar';
-import { Divider } from '@heroui/divider';
-import { Switch } from '@heroui/switch';
-import { Select, SelectItem } from '@heroui/select';
-import { Textarea } from '@heroui/input';
-import { Chip } from '@heroui/chip';
-import { User, Mail, Lock, Bell, Globe, Shield, Camera } from 'lucide-react';
-import { ThemeSwitch } from '@/components/theme-switch';
-import Loading from './loading';
+"use client";
+import { useState, useEffect } from "react";
+import { Card, CardBody } from "@heroui/card";
+import { Input } from "@heroui/input";
+import { Button } from "@heroui/button";
+import { Avatar } from "@heroui/avatar";
+import { Divider } from "@heroui/divider";
+import { Switch } from "@heroui/switch";
+import { Select, SelectItem } from "@heroui/select";
+import { Textarea } from "@heroui/input";
+import { Chip } from "@heroui/chip";
+import { User, Mail, Lock, Bell, Globe, Shield, Camera } from "lucide-react";
+
+import Loading from "./loading";
+
+import { ThemeSwitch } from "@/components/theme-switch";
 
 export default function SettingPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    bio: 'Software developer passionate about building great user experiences.',
-    language: 'en',
-    timezone: 'UTC+7',
+    name: "John Doe",
+    email: "john.doe@example.com",
+    bio: "Software developer passionate about building great user experiences.",
+    language: "en",
+    timezone: "UTC+7",
   });
 
   const [notifications, setNotifications] = useState({
@@ -31,7 +32,7 @@ export default function SettingPage() {
     marketing: false,
   });
 
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState("profile");
 
   useEffect(() => {
     // Simulate loading user settings
@@ -41,9 +42,9 @@ export default function SettingPage() {
         await new Promise((resolve) => setTimeout(resolve, 1200));
 
         // Settings would be loaded from API here
-        console.log('Settings loaded');
+        console.log("Settings loaded");
       } catch (error) {
-        console.error('Error loading settings:', error);
+        console.error("Error loading settings:", error);
       } finally {
         setIsLoading(false);
       }
@@ -68,28 +69,28 @@ export default function SettingPage() {
       // Simulate API call to save settings
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      console.log('Form submitted:', { formData, notifications });
+      console.log("Form submitted:", { formData, notifications });
       // Handle form submission here
     } catch (error) {
-      console.error('Error saving settings:', error);
+      console.error("Error saving settings:", error);
     } finally {
       setIsSaving(false);
     }
   };
 
   const languages = [
-    { key: 'en', label: 'English' },
-    { key: 'id', label: 'Bahasa Indonesia' },
-    { key: 'es', label: 'Español' },
-    { key: 'fr', label: 'Français' },
-    { key: 'de', label: 'Deutsch' },
+    { key: "en", label: "English" },
+    { key: "id", label: "Bahasa Indonesia" },
+    { key: "es", label: "Español" },
+    { key: "fr", label: "Français" },
+    { key: "de", label: "Deutsch" },
   ];
 
   const timezones = [
-    { key: 'UTC+7', label: 'UTC+7 (Jakarta)' },
-    { key: 'UTC+0', label: 'UTC+0 (London)' },
-    { key: 'UTC-5', label: 'UTC-5 (New York)' },
-    { key: 'UTC+9', label: 'UTC+9 (Tokyo)' },
+    { key: "UTC+7", label: "UTC+7 (Jakarta)" },
+    { key: "UTC+0", label: "UTC+0 (London)" },
+    { key: "UTC-5", label: "UTC-5 (New York)" },
+    { key: "UTC+9", label: "UTC+9 (Tokyo)" },
   ];
 
   // Show loading skeleton
@@ -98,46 +99,46 @@ export default function SettingPage() {
   }
 
   return (
-    <div className='flex justify-center items-start'>
-      <div className='w-full max-w-4xl'>
-        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+    <div className="flex justify-center items-start">
+      <div className="w-full max-w-4xl">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Navigation Tabs */}
-          <Card className='lg:col-span-1 h-fit'>
-            <CardBody className='p-4'>
-              <div className='flex flex-col gap-2'>
+          <Card className="lg:col-span-1 h-fit">
+            <CardBody className="p-4">
+              <div className="flex flex-col gap-2">
                 <Button
-                  variant={activeTab === 'profile' ? 'solid' : 'light'}
-                  color='primary'
+                  className="justify-start"
+                  color="primary"
                   startContent={<User size={18} />}
-                  className='justify-start'
-                  onPress={() => setActiveTab('profile')}
+                  variant={activeTab === "profile" ? "solid" : "light"}
+                  onPress={() => setActiveTab("profile")}
                 >
                   Profile
                 </Button>
                 <Button
-                  variant={activeTab === 'security' ? 'solid' : 'light'}
-                  color='primary'
+                  className="justify-start"
+                  color="primary"
                   startContent={<Shield size={18} />}
-                  className='justify-start'
-                  onPress={() => setActiveTab('security')}
+                  variant={activeTab === "security" ? "solid" : "light"}
+                  onPress={() => setActiveTab("security")}
                 >
                   Security
                 </Button>
                 <Button
-                  variant={activeTab === 'notifications' ? 'solid' : 'light'}
-                  color='primary'
+                  className="justify-start"
+                  color="primary"
                   startContent={<Bell size={18} />}
-                  className='justify-start'
-                  onPress={() => setActiveTab('notifications')}
+                  variant={activeTab === "notifications" ? "solid" : "light"}
+                  onPress={() => setActiveTab("notifications")}
                 >
                   Notifications
                 </Button>
                 <Button
-                  variant={activeTab === 'preferences' ? 'solid' : 'light'}
-                  color='primary'
+                  className="justify-start"
+                  color="primary"
                   startContent={<Globe size={18} />}
-                  className='justify-start'
-                  onPress={() => setActiveTab('preferences')}
+                  variant={activeTab === "preferences" ? "solid" : "light"}
+                  onPress={() => setActiveTab("preferences")}
                 >
                   Preferences
                 </Button>
@@ -146,112 +147,112 @@ export default function SettingPage() {
           </Card>
 
           {/* Main Content */}
-          <Card className='lg:col-span-2'>
-            <CardBody className='p-6'>
+          <Card className="lg:col-span-2">
+            <CardBody className="p-6">
               <form onSubmit={handleSubmit}>
-                {activeTab === 'profile' && (
-                  <div className='space-y-6'>
-                    <div className='flex items-center gap-4 mb-6'>
-                      <div className='relative'>
+                {activeTab === "profile" && (
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="relative">
                         <Avatar
-                          src='https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150'
-                          size='lg'
-                          className='w-20 h-20'
+                          className="w-20 h-20"
+                          size="lg"
+                          src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150"
                         />
                         <Button
                           isIconOnly
-                          size='sm'
-                          variant='solid'
-                          color='primary'
-                          className='absolute -bottom-1 -right-1'
+                          className="absolute -bottom-1 -right-1"
+                          color="primary"
+                          size="sm"
+                          variant="solid"
                         >
                           <Camera size={14} />
                         </Button>
                       </div>
                       <div>
-                        <h3 className='text-lg font-semibold'>
+                        <h3 className="text-lg font-semibold">
                           {formData.name}
                         </h3>
-                        <p className='text-default-500'>{formData.email}</p>
+                        <p className="text-default-500">{formData.email}</p>
                         <Chip
-                          size='sm'
-                          color='success'
-                          variant='flat'
-                          className='mt-1'
+                          className="mt-1"
+                          color="success"
+                          size="sm"
+                          variant="flat"
                         >
                           Verified
                         </Chip>
                       </div>
                     </div>
 
-                    <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <Input
-                        label='Full Name'
-                        placeholder='Enter your full name'
+                        required
+                        label="Full Name"
+                        placeholder="Enter your full name"
+                        startContent={
+                          <User className="text-default-400" size={18} />
+                        }
                         value={formData.name}
                         onValueChange={(value) =>
-                          handleInputChange('name', value)
+                          handleInputChange("name", value)
                         }
-                        startContent={
-                          <User size={18} className='text-default-400' />
-                        }
-                        required
                       />
                       <Input
-                        label='Email Address'
-                        placeholder='Enter your email'
-                        type='email'
+                        required
+                        label="Email Address"
+                        placeholder="Enter your email"
+                        startContent={
+                          <Mail className="text-default-400" size={18} />
+                        }
+                        type="email"
                         value={formData.email}
                         onValueChange={(value) =>
-                          handleInputChange('email', value)
+                          handleInputChange("email", value)
                         }
-                        startContent={
-                          <Mail size={18} className='text-default-400' />
-                        }
-                        required
                       />
                     </div>
 
                     <Textarea
-                      label='Bio'
-                      placeholder='Tell us about yourself'
-                      value={formData.bio}
-                      onValueChange={(value) => handleInputChange('bio', value)}
+                      label="Bio"
                       maxRows={3}
+                      placeholder="Tell us about yourself"
+                      value={formData.bio}
+                      onValueChange={(value) => handleInputChange("bio", value)}
                     />
                   </div>
                 )}
 
-                {activeTab === 'security' && (
-                  <div className='space-y-6'>
+                {activeTab === "security" && (
+                  <div className="space-y-6">
                     <div>
-                      <h3 className='text-lg font-semibold mb-4'>
+                      <h3 className="text-lg font-semibold mb-4">
                         Password & Security
                       </h3>
-                      <div className='space-y-4'>
+                      <div className="space-y-4">
                         <Input
-                          label='Current Password'
-                          placeholder='Enter current password'
-                          type='password'
+                          label="Current Password"
+                          placeholder="Enter current password"
                           startContent={
-                            <Lock size={18} className='text-default-400' />
+                            <Lock className="text-default-400" size={18} />
                           }
+                          type="password"
                         />
                         <Input
-                          label='New Password'
-                          placeholder='Enter new password'
-                          type='password'
+                          label="New Password"
+                          placeholder="Enter new password"
                           startContent={
-                            <Lock size={18} className='text-default-400' />
+                            <Lock className="text-default-400" size={18} />
                           }
+                          type="password"
                         />
                         <Input
-                          label='Confirm New Password'
-                          placeholder='Confirm new password'
-                          type='password'
+                          label="Confirm New Password"
+                          placeholder="Confirm new password"
                           startContent={
-                            <Lock size={18} className='text-default-400' />
+                            <Lock className="text-default-400" size={18} />
                           }
+                          type="password"
                         />
                       </div>
                     </div>
@@ -259,13 +260,13 @@ export default function SettingPage() {
                     <Divider />
 
                     <div>
-                      <h4 className='font-medium mb-3'>
+                      <h4 className="font-medium mb-3">
                         Two-Factor Authentication
                       </h4>
-                      <div className='flex items-center justify-between p-4 bg-default-50 rounded-lg'>
+                      <div className="flex items-center justify-between p-4 bg-default-50 rounded-lg">
                         <div>
-                          <p className='font-medium'>SMS Authentication</p>
-                          <p className='text-sm text-default-500'>
+                          <p className="font-medium">SMS Authentication</p>
+                          <p className="text-sm text-default-500">
                             Receive codes via SMS
                           </p>
                         </div>
@@ -274,27 +275,27 @@ export default function SettingPage() {
                     </div>
 
                     <div>
-                      <h4 className='font-medium mb-3'>Login Sessions</h4>
-                      <div className='space-y-2'>
-                        <div className='flex items-center justify-between p-3 bg-default-50 rounded-lg'>
+                      <h4 className="font-medium mb-3">Login Sessions</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between p-3 bg-default-50 rounded-lg">
                           <div>
-                            <p className='font-medium'>Current Session</p>
-                            <p className='text-sm text-default-500'>
+                            <p className="font-medium">Current Session</p>
+                            <p className="text-sm text-default-500">
                               Chrome on Windows • Jakarta, Indonesia
                             </p>
                           </div>
-                          <Chip size='sm' color='success' variant='dot'>
+                          <Chip color="success" size="sm" variant="dot">
                             Active
                           </Chip>
                         </div>
-                        <div className='flex items-center justify-between p-3 bg-default-50 rounded-lg'>
+                        <div className="flex items-center justify-between p-3 bg-default-50 rounded-lg">
                           <div>
-                            <p className='font-medium'>Mobile App</p>
-                            <p className='text-sm text-default-500'>
+                            <p className="font-medium">Mobile App</p>
+                            <p className="text-sm text-default-500">
                               iPhone • Last active 2 hours ago
                             </p>
                           </div>
-                          <Button size='sm' variant='light' color='danger'>
+                          <Button color="danger" size="sm" variant="light">
                             Revoke
                           </Button>
                         </div>
@@ -303,52 +304,52 @@ export default function SettingPage() {
                   </div>
                 )}
 
-                {activeTab === 'notifications' && (
-                  <div className='space-y-6'>
+                {activeTab === "notifications" && (
+                  <div className="space-y-6">
                     <div>
-                      <h3 className='text-lg font-semibold mb-4'>
+                      <h3 className="text-lg font-semibold mb-4">
                         Notification Preferences
                       </h3>
-                      <div className='space-y-4'>
-                        <div className='flex items-center justify-between p-4 bg-default-50 rounded-lg'>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between p-4 bg-default-50 rounded-lg">
                           <div>
-                            <p className='font-medium'>Email Notifications</p>
-                            <p className='text-sm text-default-500'>
+                            <p className="font-medium">Email Notifications</p>
+                            <p className="text-sm text-default-500">
                               Receive notifications via email
                             </p>
                           </div>
                           <Switch
                             isSelected={notifications.email}
                             onValueChange={(value) =>
-                              handleNotificationChange('email', value)
+                              handleNotificationChange("email", value)
                             }
                           />
                         </div>
-                        <div className='flex items-center justify-between p-4 bg-default-50 rounded-lg'>
+                        <div className="flex items-center justify-between p-4 bg-default-50 rounded-lg">
                           <div>
-                            <p className='font-medium'>Push Notifications</p>
-                            <p className='text-sm text-default-500'>
+                            <p className="font-medium">Push Notifications</p>
+                            <p className="text-sm text-default-500">
                               Receive push notifications on your device
                             </p>
                           </div>
                           <Switch
                             isSelected={notifications.push}
                             onValueChange={(value) =>
-                              handleNotificationChange('push', value)
+                              handleNotificationChange("push", value)
                             }
                           />
                         </div>
-                        <div className='flex items-center justify-between p-4 bg-default-50 rounded-lg'>
+                        <div className="flex items-center justify-between p-4 bg-default-50 rounded-lg">
                           <div>
-                            <p className='font-medium'>Marketing Emails</p>
-                            <p className='text-sm text-default-500'>
+                            <p className="font-medium">Marketing Emails</p>
+                            <p className="text-sm text-default-500">
                               Receive updates about new features and offers
                             </p>
                           </div>
                           <Switch
                             isSelected={notifications.marketing}
                             onValueChange={(value) =>
-                              handleNotificationChange('marketing', value)
+                              handleNotificationChange("marketing", value)
                             }
                           />
                         </div>
@@ -357,20 +358,20 @@ export default function SettingPage() {
                   </div>
                 )}
 
-                {activeTab === 'preferences' && (
-                  <div className='space-y-6'>
+                {activeTab === "preferences" && (
+                  <div className="space-y-6">
                     <div>
-                      <h3 className='text-lg font-semibold mb-4'>
+                      <h3 className="text-lg font-semibold mb-4">
                         Language & Region
                       </h3>
-                      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Select
-                          label='Language'
-                          placeholder='Select language'
+                          label="Language"
+                          placeholder="Select language"
                           selectedKeys={[formData.language]}
                           onSelectionChange={(keys) =>
                             handleInputChange(
-                              'language',
+                              "language",
                               Array.from(keys)[0] as string,
                             )
                           }
@@ -382,12 +383,12 @@ export default function SettingPage() {
                           ))}
                         </Select>
                         <Select
-                          label='Timezone'
-                          placeholder='Select timezone'
+                          label="Timezone"
+                          placeholder="Select timezone"
                           selectedKeys={[formData.timezone]}
                           onSelectionChange={(keys) =>
                             handleInputChange(
-                              'timezone',
+                              "timezone",
                               Array.from(keys)[0] as string,
                             )
                           }
@@ -404,11 +405,11 @@ export default function SettingPage() {
                     <Divider />
 
                     <div>
-                      <h4 className='font-medium mb-3'>Theme Preferences</h4>
-                      <div className='flex items-center justify-between p-4 bg-default-50 rounded-lg'>
+                      <h4 className="font-medium mb-3">Theme Preferences</h4>
+                      <div className="flex items-center justify-between p-4 bg-default-50 rounded-lg">
                         <div>
-                          <p className='font-medium'>Dark Mode</p>
-                          <p className='text-sm text-default-500'>
+                          <p className="font-medium">Dark Mode</p>
+                          <p className="text-sm text-default-500">
                             Use dark theme across the application
                           </p>
                         </div>
@@ -418,17 +419,17 @@ export default function SettingPage() {
                   </div>
                 )}
 
-                <div className='flex justify-end gap-3 mt-8 pt-6 border-t border-default-200'>
-                  <Button variant='light' color='default' disabled={isSaving}>
+                <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-default-200">
+                  <Button color="default" disabled={isSaving} variant="light">
                     Cancel
                   </Button>
                   <Button
-                    color='primary'
-                    type='submit'
-                    isLoading={isSaving}
+                    color="primary"
                     disabled={isSaving}
+                    isLoading={isSaving}
+                    type="submit"
                   >
-                    {isSaving ? 'Saving...' : 'Save Changes'}
+                    {isSaving ? "Saving..." : "Save Changes"}
                   </Button>
                 </div>
               </form>

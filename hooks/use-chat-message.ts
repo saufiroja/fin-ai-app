@@ -1,9 +1,9 @@
-import React from 'react';
+import React from "react";
 
 interface Message {
   id: number;
   text: string;
-  sender: 'user' | 'bot';
+  sender: "user" | "bot";
 }
 
 export const useChatMessages = () => {
@@ -19,7 +19,7 @@ export const useChatMessages = () => {
         {
           id: Date.now(),
           text: "Thanks for your message! I'm a demo bot.",
-          sender: 'bot',
+          sender: "bot",
         },
       ]);
     }, 1000);

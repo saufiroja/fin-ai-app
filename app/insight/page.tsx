@@ -1,21 +1,20 @@
-'use client';
-import React, { useState, useEffect } from 'react';
-import { Card, CardBody, CardHeader } from '@heroui/card';
-import { Button } from '@heroui/button';
-import { Chip } from '@heroui/chip';
-import { Progress } from '@heroui/progress';
+"use client";
+import React, { useState, useEffect } from "react";
+import { Card, CardBody, CardHeader } from "@heroui/card";
+import { Button } from "@heroui/button";
+import { Chip } from "@heroui/chip";
+import { Progress } from "@heroui/progress";
 import {
   TrendingUp,
   Target,
   AlertTriangle,
   Lightbulb,
   ArrowUp,
-  ArrowDown,
   Calendar,
-  DollarSign,
-} from 'lucide-react';
-import Loading from './loading';
-import NextLink from 'next/link';
+} from "lucide-react";
+import NextLink from "next/link";
+
+import Loading from "./loading";
 
 interface Insight {
   id: number;
@@ -56,61 +55,61 @@ export default function InsightsPage() {
         const insightData: Insight[] = [
           {
             id: 1,
-            type: 'analysis',
-            title: 'Analisis Pengeluaran Minggu Ini',
-            icon: <TrendingUp className='w-5 h-5' />,
-            iconColor: 'bg-blue-500',
+            type: "analysis",
+            title: "Analisis Pengeluaran Minggu Ini",
+            icon: <TrendingUp className="w-5 h-5" />,
+            iconColor: "bg-blue-500",
             content:
-              'Pengeluaran Anda minggu ini naik 15% dibanding minggu lalu (Rp 425.000 vs Rp 370.000). Peningkatan terbesar ada pada kategori Makanan & Minuman. Disarankan untuk lebih sering masak di rumah untuk 3 hari ke depan.',
-            trend: 'up',
-            percentage: '15%',
-            amount: 'Rp 425.000',
-            category: 'Makanan & Minuman',
+              "Pengeluaran Anda minggu ini naik 15% dibanding minggu lalu (Rp 425.000 vs Rp 370.000). Peningkatan terbesar ada pada kategori Makanan & Minuman. Disarankan untuk lebih sering masak di rumah untuk 3 hari ke depan.",
+            trend: "up",
+            percentage: "15%",
+            amount: "Rp 425.000",
+            category: "Makanan & Minuman",
           },
           {
             id: 2,
-            type: 'target',
-            title: 'Target Tabungan Bulan Ini',
-            icon: <Target className='w-5 h-5' />,
-            iconColor: 'bg-green-500',
+            type: "target",
+            title: "Target Tabungan Bulan Ini",
+            icon: <Target className="w-5 h-5" />,
+            iconColor: "bg-green-500",
             content:
-              'Selamat! Anda sudah mencapai 78% dari target tabungan bulan ini (Rp 1.560.000 dari Rp 2.000.000). Dengan pola pengeluaran saat ini, Anda akan melampaui target sebesar 12% di akhir bulan.',
+              "Selamat! Anda sudah mencapai 78% dari target tabungan bulan ini (Rp 1.560.000 dari Rp 2.000.000). Dengan pola pengeluaran saat ini, Anda akan melampaui target sebesar 12% di akhir bulan.",
             progress: 78,
-            currentAmount: 'Rp 1.560.000',
-            targetAmount: 'Rp 2.000.000',
-            projectedExcess: '12%',
+            currentAmount: "Rp 1.560.000",
+            targetAmount: "Rp 2.000.000",
+            projectedExcess: "12%",
           },
           {
             id: 3,
-            type: 'alert',
-            title: 'Alert: Budget Entertainment',
-            icon: <AlertTriangle className='w-5 h-5' />,
-            iconColor: 'bg-orange-500',
+            type: "alert",
+            title: "Alert: Budget Entertainment",
+            icon: <AlertTriangle className="w-5 h-5" />,
+            iconColor: "bg-orange-500",
             content:
-              'Budget entertainment Anda sudah terpakai 85% (Rp 340.000 dari Rp 400.000) padahal masih ada 12 hari lagi. Pertimbangkan aktivitas free/murah seperti jogging di taman atau nonton film di rumah.',
+              "Budget entertainment Anda sudah terpakai 85% (Rp 340.000 dari Rp 400.000) padahal masih ada 12 hari lagi. Pertimbangkan aktivitas free/murah seperti jogging di taman atau nonton film di rumah.",
             progress: 85,
-            usedAmount: 'Rp 340.000',
-            totalBudget: 'Rp 400.000',
+            usedAmount: "Rp 340.000",
+            totalBudget: "Rp 400.000",
             daysLeft: 12,
-            status: 'warning',
+            status: "warning",
           },
           {
             id: 4,
-            type: 'recommendation',
-            title: 'Smart Recommendation',
-            icon: <Lightbulb className='w-5 h-5' />,
-            iconColor: 'bg-yellow-500',
+            type: "recommendation",
+            title: "Smart Recommendation",
+            icon: <Lightbulb className="w-5 h-5" />,
+            iconColor: "bg-yellow-500",
             content:
-              'Berdasarkan pola belanja Anda, ada promo di Superindo untuk produk yang sering Anda beli: Susu Ultra (diskon 20%), Telur (buy 2 get 1). Estimasi penghematan: Rp 45.000 untuk belanja minggu depan.',
-            savings: 'Rp 45.000',
-            store: 'Superindo',
-            deals: ['Susu Ultra (diskon 20%)', 'Telur (buy 2 get 1)'],
+              "Berdasarkan pola belanja Anda, ada promo di Superindo untuk produk yang sering Anda beli: Susu Ultra (diskon 20%), Telur (buy 2 get 1). Estimasi penghematan: Rp 45.000 untuk belanja minggu depan.",
+            savings: "Rp 45.000",
+            store: "Superindo",
+            deals: ["Susu Ultra (diskon 20%)", "Telur (buy 2 get 1)"],
           },
         ];
 
         setInsights(insightData);
       } catch (error) {
-        console.error('Error loading insight data:', error);
+        console.error("Error loading insight data:", error);
       } finally {
         setIsLoading(false);
       }
@@ -126,82 +125,82 @@ export default function InsightsPage() {
 
   const getStatusColor = (type: any) => {
     switch (type) {
-      case 'analysis':
-        return 'primary';
-      case 'target':
-        return 'success';
-      case 'alert':
-        return 'warning';
-      case 'recommendation':
-        return 'secondary';
+      case "analysis":
+        return "primary";
+      case "target":
+        return "success";
+      case "alert":
+        return "warning";
+      case "recommendation":
+        return "secondary";
       default:
-        return 'default';
+        return "default";
     }
   };
 
   const formatCurrency = (amount: any) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
     }).format(amount);
   };
 
   return (
-    <div className='min-h-screen p-6'>
-      <div className='max-w-4xl mx-auto space-y-6'>
+    <div className="min-h-screen p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <div className='text-center mb-8'>
-          <h1 className='text-4xl font-bold mb-2'>AI Insights & Rekomendasi</h1>
-          <p className='dark:text-gray-200'>
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-2">AI Insights & Rekomendasi</h1>
+          <p className="dark:text-gray-200">
             Analisis cerdas untuk keuangan yang lebih baik
           </p>
         </div>
 
         {/* Tips Card at the top */}
-        <Card className='dark:text-gray-200'>
-          <CardBody className='text-center py-6'>
-            <div className='flex items-center justify-center gap-2 mb-2'>
-              <Lightbulb className='w-5 h-5' />
-              <h3 className='text-lg font-semibold'>Tips Hari Ini</h3>
+        <Card className="dark:text-gray-200">
+          <CardBody className="text-center py-6">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Lightbulb className="w-5 h-5" />
+              <h3 className="text-lg font-semibold">Tips Hari Ini</h3>
             </div>
-            <p className='dark:text-gray-300 leading-relaxed'>
+            <p className="dark:text-gray-300 leading-relaxed">
               Gunakan metode 50/30/20: 50% kebutuhan, 30% keinginan, 20%
               tabungan untuk keuangan yang seimbang.
             </p>
           </CardBody>
         </Card>
 
-        <div className='flex justify-end mb-4'>
-          <NextLink href='/insight/add'>
-            <Button color='primary'>+ Add New Insight</Button>
+        <div className="flex justify-end mb-4">
+          <NextLink href="/insight/add">
+            <Button color="primary">+ Add New Insight</Button>
           </NextLink>
         </div>
 
         {/* Insights Cards */}
-        <div className='space-y-4'>
+        <div className="space-y-4">
           {insights.map((insight) => (
             <Card
               key={insight.id}
-              className='hover:shadow-lg transition-all duration-300 border-l-4 border-l-transparent hover:border-l-blue-500'
-              shadow='sm'
+              className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-transparent hover:border-l-blue-500"
+              shadow="sm"
             >
-              <CardHeader className='pb-3'>
-                <div className='flex items-center gap-3'>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
                   <div
                     className={`p-2 rounded-full ${insight.iconColor} text-white`}
                   >
                     {insight.icon}
                   </div>
-                  <div className='flex-1'>
-                    <h3 className='text-lg font-semibold dark:text-gray-200'>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold dark:text-gray-200">
                       {insight.title}
                     </h3>
                     <Chip
-                      size='sm'
+                      className="mt-1"
                       color={getStatusColor(insight.type)}
-                      variant='flat'
-                      className='mt-1'
+                      size="sm"
+                      variant="flat"
                     >
                       {insight.type.charAt(0).toUpperCase() +
                         insight.type.slice(1)}
@@ -210,47 +209,47 @@ export default function InsightsPage() {
                 </div>
               </CardHeader>
 
-              <CardBody className='pt-0'>
-                <p className='leading-relaxed mb-4 dark:text-gray-200'>
+              <CardBody className="pt-0">
+                <p className="leading-relaxed mb-4 dark:text-gray-200">
                   {insight.content}
                 </p>
 
                 {/* Analysis specific content */}
-                {insight.type === 'analysis' && (
-                  <div className='flex flex-wrap gap-4 items-center'>
-                    <div className='flex items-center gap-2 px-3 py-2 rounded-lg'>
-                      <ArrowUp className='w-4 h-4 text-red-500' />
-                      <span className='text-red-600 font-medium'>
+                {insight.type === "analysis" && (
+                  <div className="flex flex-wrap gap-4 items-center">
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg">
+                      <ArrowUp className="w-4 h-4 text-red-500" />
+                      <span className="text-red-600 font-medium">
                         {insight.percentage}
                       </span>
                     </div>
-                    <div className='flex items-center gap-2'>
-                      <span className='font-medium'>{insight.amount}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{insight.amount}</span>
                     </div>
-                    <Chip size='sm' color='primary' variant='flat'>
+                    <Chip color="primary" size="sm" variant="flat">
                       {insight.category}
                     </Chip>
                   </div>
                 )}
 
                 {/* Target specific content */}
-                {insight.type === 'target' && (
-                  <div className='space-y-3'>
-                    <div className='flex justify-between text-sm dark:text-gray-200'>
+                {insight.type === "target" && (
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm dark:text-gray-200">
                       <span>{insight.currentAmount}</span>
                       <span>{insight.targetAmount}</span>
                     </div>
                     <Progress
+                      className="w-full"
+                      color="success"
+                      size="md"
                       value={insight.progress}
-                      color='success'
-                      className='w-full'
-                      size='md'
                     />
-                    <div className='flex items-center justify-between'>
-                      <span className='text-sm dark:text-gray-200'>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm dark:text-gray-200">
                         {insight.progress}% tercapai
                       </span>
-                      <Chip size='sm' color='success' variant='flat'>
+                      <Chip color="success" size="sm" variant="flat">
                         +{insight.projectedExcess} proyeksi
                       </Chip>
                     </div>
@@ -258,25 +257,25 @@ export default function InsightsPage() {
                 )}
 
                 {/* Alert specific content */}
-                {insight.type === 'alert' && (
-                  <div className='space-y-3'>
-                    <div className='flex justify-between text-sm dark:text-gray-200'>
+                {insight.type === "alert" && (
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm dark:text-gray-200">
                       <span>{insight.usedAmount}</span>
                       <span>{insight.totalBudget}</span>
                     </div>
                     <Progress
+                      className="w-full"
+                      color="warning"
+                      size="md"
                       value={insight.progress}
-                      color='warning'
-                      className='w-full'
-                      size='md'
                     />
-                    <div className='flex items-center justify-between'>
-                      <span className='text-sm dark:text-gray-200'>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm dark:text-gray-200">
                         {insight.progress}% terpakai
                       </span>
-                      <div className='flex items-center gap-1'>
-                        <Calendar className='w-4 h-4 text-orange-500' />
-                        <span className='text-sm text-orange-600'>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4 text-orange-500" />
+                        <span className="text-sm text-orange-600">
                           {insight.daysLeft} hari tersisa
                         </span>
                       </div>
@@ -285,25 +284,25 @@ export default function InsightsPage() {
                 )}
 
                 {/* Recommendation specific content */}
-                {insight.type === 'recommendation' && (
-                  <div className='space-y-3'>
-                    <div className='flex items-center justify-between bg-green-50 p-3 rounded-lg'>
-                      <div className='flex items-center gap-2'>
-                        <span className='text-green-700 font-medium'>
+                {insight.type === "recommendation" && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between bg-green-50 p-3 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-700 font-medium">
                           Potensi hemat: {insight.savings}
                         </span>
                       </div>
-                      <Chip size='sm' color='success' variant='solid'>
+                      <Chip color="success" size="sm" variant="solid">
                         {insight.store}
                       </Chip>
                     </div>
-                    <div className='flex flex-wrap gap-2'>
+                    <div className="flex flex-wrap gap-2">
                       {insight.deals?.map((deal, index) => (
                         <Chip
                           key={index}
-                          size='sm'
-                          variant='bordered'
-                          color='secondary'
+                          color="secondary"
+                          size="sm"
+                          variant="bordered"
                         >
                           {deal}
                         </Chip>

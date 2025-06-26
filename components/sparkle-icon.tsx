@@ -1,11 +1,11 @@
-import { Icon } from '@iconify/react';
+import { Icon } from "@iconify/react";
 
 const SparkleIcon = () => {
   return (
     <>
       <Icon
-        icon='lucide:sparkles'
-        className='text-white text-xs md:text-sm bg-transparent'
+        className="text-white text-xs md:text-sm bg-transparent"
+        icon="lucide:sparkles"
       />
     </>
   );

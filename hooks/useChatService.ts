@@ -1,28 +1,31 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
+
 import {
   getChatHistory,
   addChatHistory,
   deleteChatHistory,
   renameChatHistory,
   archiveChatHistory,
-} from '@/dummy/chatHistoryUtil';
+} from "@/dummy/chatHistoryUtil";
 
 // This hook abstracts chat data logic for easy API integration later
 export function useChatService() {
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [chatMessagesById, setChatMessagesById] = useState<any>({});
-  const [selectedChat, setSelectedChat] = useState('New Chat');
+  const [selectedChat, setSelectedChat] = useState("New Chat");
   const [selectedChatId, setSelectedChatId] = useState<any>(null);
   const [isTyping, setIsTyping] = useState(false);
 
   // Load chat history and messages on mount
   useEffect(() => {
     const history = getChatHistory();
+
     setChatHistory(history);
     const stored =
-      typeof window !== 'undefined'
-        ? localStorage.getItem('chatMessagesById')
+      typeof window !== "undefined"
+        ? localStorage.getItem("chatMessagesById")
         : null;
+
     if (stored) setChatMessagesById(JSON.parse(stored));
     if (history.length > 0) {
       setSelectedChat(history[history.length - 1].title);
@@ -32,9 +35,9 @@ export function useChatService() {
 
   // Persist messages to localStorage
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.setItem(
-        'chatMessagesById',
+        "chatMessagesById",
         JSON.stringify(chatMessagesById),
       );
     }
@@ -42,18 +45,21 @@ export function useChatService() {
 
   // Add a new chat
   const createNewChat = useCallback(() => {
-    const baseTitle = 'New Chat';
+    const baseTitle = "New Chat";
     let count = 1;
     let title = baseTitle;
+
     while (chatHistory.some((c: any) => c.title === title)) {
       count += 1;
       title = `${baseTitle} ${count}`;
     }
     addChatHistory(title);
     const updated = getChatHistory();
+
     setChatHistory(updated);
     setSelectedChat(title);
     const newChat = updated.find((c: any) => c.title === title);
+
     setSelectedChatId(newChat?.id);
     setChatMessagesById((prev: any) => ({ ...prev, [newChat?.id]: [] }));
   }, [chatHistory]);
@@ -62,7 +68,8 @@ export function useChatService() {
   const sendMessage = useCallback(
     (text: string) => {
       if (!text.trim() || !selectedChatId) return;
-      const newMsg = { id: Date.now(), text, sender: 'user' };
+      const newMsg = { id: Date.now(), text, sender: "user" };
+
       setChatMessagesById((prev: any) => ({
         ...prev,
         [selectedChatId]: [...(prev[selectedChatId] || []), newMsg],
@@ -76,8 +83,8 @@ export function useChatService() {
             ...(prev[selectedChatId] || []),
             {
               id: Date.now() + 1,
-              text: 'Ini jawaban statis dari Fin-AI.',
-              sender: 'bot',
+              text: "Ini jawaban statis dari Fin-AI.",
+              sender: "bot",
             },
           ],
         }));

@@ -1,5 +1,5 @@
-import { Card, CardHeader, CardBody } from '@heroui/card';
-import { ReactNode } from 'react';
+import { Card, CardHeader, CardBody } from "@heroui/card";
+import { ReactNode } from "react";
 
 interface StatisticsCardProps {
   icon?: ReactNode;
@@ -13,12 +13,12 @@ export default function StatisticsCard({
   icon,
   label,
   value,
-  valueColor = '',
-  iconBg = '',
+  valueColor = "",
+  iconBg = "",
 }: StatisticsCardProps) {
   return (
     <Card>
-      <CardHeader className='flex items-center gap-3'>
+      <CardHeader className="flex items-center gap-3">
         {icon && (
           <div
             className={`w-12 h-12 rounded-xl flex items-center justify-center ${iconBg}`}
@@ -26,7 +26,7 @@ export default function StatisticsCard({
             {icon}
           </div>
         )}
-        <span className='text-base font-medium'>{label}</span>
+        <span className="text-base font-medium">{label}</span>
       </CardHeader>
       <CardBody>
         <span className={`text-2xl font-bold ${valueColor}`}>{value}</span>

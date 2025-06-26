@@ -12,9 +12,7 @@ export interface ThemeSwitchProps {
   className?: string;
 }
 
-export const ThemeSwitch: FC<ThemeSwitchProps> = ({
-  className,
-}) => {
+export const ThemeSwitch: FC<ThemeSwitchProps> = ({ className }) => {
   const { theme, setTheme } = useTheme();
   const isSSR = useIsSSR();
 
@@ -24,14 +22,14 @@ export const ThemeSwitch: FC<ThemeSwitchProps> = ({
 
   return (
     <Switch
-      isSelected={theme === "dark" && !isSSR}
-      onValueChange={onChange}
-      size="lg"
-      color="primary"
-      startContent={<SunFilledIcon size={18} />}
-      endContent={<MoonFilledIcon size={18} />}
-      className={clsx("", className)}
       aria-label={`Switch to ${theme === "dark" || isSSR ? "light" : "dark"} mode`}
+      className={clsx("", className)}
+      color="primary"
+      endContent={<MoonFilledIcon size={18} />}
+      isSelected={theme === "dark" && !isSSR}
+      size="lg"
+      startContent={<SunFilledIcon size={18} />}
+      onValueChange={onChange}
     />
   );
 };

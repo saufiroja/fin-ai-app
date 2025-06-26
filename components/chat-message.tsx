@@ -1,9 +1,9 @@
-import React from 'react';
+import React from "react";
 
 interface Message {
   id: number;
   text: string;
-  sender: 'user' | 'bot';
+  sender: "user" | "bot";
 }
 
 interface ChatMessageProps {
@@ -11,14 +11,14 @@ interface ChatMessageProps {
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
-  const isUser = message.sender === 'user';
+  const isUser = message.sender === "user";
 
   return (
     <div
-      className={`flex items-start gap-2 ${isUser ? 'flex-row-reverse' : ''}`}
+      className={`flex items-start gap-2 ${isUser ? "flex-row-reverse" : ""}`}
     >
       <div
-        className={`max-w-[70%] p-3 rounded-lg ${isUser ? 'bg-primary text-primary-foreground' : 'bg-content2'}`}
+        className={`max-w-[70%] p-3 rounded-lg ${isUser ? "bg-primary text-primary-foreground" : "bg-content2"}`}
       >
         {message.text}
       </div>

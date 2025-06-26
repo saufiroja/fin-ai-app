@@ -1,13 +1,12 @@
-import '@/styles/globals.css';
-import { Metadata, Viewport } from 'next';
-import { Link } from '@heroui/link';
-import clsx from 'clsx';
+import "@/styles/globals.css";
+import { Metadata, Viewport } from "next";
+import clsx from "clsx";
 
-import { Providers } from './providers';
+import { Providers } from "./providers";
 
-import { siteConfig } from '@/config/site';
-import { fontSans } from '@/config/fonts';
-import { Navbar } from '@/components/navbar';
+import { siteConfig } from "@/config/site";
+import { fontSans } from "@/config/fonts";
+import { Navbar } from "@/components/navbar";
 
 export const metadata: Metadata = {
   title: {
@@ -16,14 +15,14 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   icons: {
-    icon: '/favicon.ico',
+    icon: "/favicon.ico",
   },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: 'white' },
-    { media: '(prefers-color-scheme: dark)', color: 'black' },
+    { media: "(prefers-color-scheme: light)", color: "white" },
+    { media: "(prefers-color-scheme: dark)", color: "black" },
   ],
 };
 
@@ -33,23 +32,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html suppressHydrationWarning lang='en'>
+    <html suppressHydrationWarning lang="en">
       <head />
       <body
         className={clsx(
-          'min-h-screen text-foreground bg-background font-sans antialiased',
+          "min-h-screen text-foreground bg-background font-sans antialiased",
           fontSans.variable,
         )}
       >
-        <Providers themeProps={{ attribute: 'class', defaultTheme: 'dark' }}>
-          <div className='relative flex flex-col h-screen'>
+        <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
+          <div className="relative flex flex-col h-screen">
             <Navbar />
             <main
               className={clsx(
-                'container mx-auto max-w-7xl flex-grow',
+                "container mx-auto max-w-7xl flex-grow",
                 // Responsive padding and width for mobile
-                'px-2 sm:px-4 md:px-6 mt-4',
-                'w-full',
+                "px-2 sm:px-4 md:px-6 mt-4",
+                "w-full",
               )}
             >
               {children}

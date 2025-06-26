@@ -1,5 +1,5 @@
-'use client';
-import { useState, useMemo, useEffect } from 'react';
+"use client";
+import { useState, useMemo, useEffect } from "react";
 import {
   Table,
   TableHeader,
@@ -7,10 +7,9 @@ import {
   TableBody,
   TableRow,
   TableCell,
-} from '@heroui/table';
-import { Chip } from '@heroui/chip';
-import { Tooltip } from '@heroui/tooltip';
-import { Skeleton } from '@heroui/skeleton';
+} from "@heroui/table";
+import { Chip } from "@heroui/chip";
+import { Tooltip } from "@heroui/tooltip";
 import {
   Search,
   Plus,
@@ -21,35 +20,33 @@ import {
   Download,
   Eye,
   Calendar,
-} from 'lucide-react';
-import { dummyResponseHistory, dummyResponseHistory2 } from '@/dummy/history';
-import { categories } from '@/dummy/categories';
-import { Card, CardHeader, CardBody, CardFooter } from '@heroui/card';
-import StatisticsCard from '@/components/StatisticsCard';
-import { Button } from '@heroui/button';
-import { Input } from '@heroui/input';
-import { Calendar as HeroCalendar, RangeCalendar } from '@heroui/calendar';
-import { Tabs, Tab } from '@heroui/tabs';
-import { Select, SelectItem } from '@heroui/select';
-import { today, getLocalTimeZone } from '@internationalized/date';
-import { Popover, PopoverTrigger, PopoverContent } from '@heroui/popover';
-import {
-  Pagination,
-  PaginationItem,
-  PaginationCursor,
-} from '@heroui/pagination';
-import NextLink from 'next/link';
-import Loading from './loading';
+} from "lucide-react";
+import { Card, CardHeader, CardBody, CardFooter } from "@heroui/card";
+import { Button } from "@heroui/button";
+import { Input } from "@heroui/input";
+import { RangeCalendar } from "@heroui/calendar";
+import { Tabs, Tab } from "@heroui/tabs";
+import { Select, SelectItem } from "@heroui/select";
+import { getLocalTimeZone } from "@internationalized/date";
+import { Popover, PopoverTrigger, PopoverContent } from "@heroui/popover";
+import { Pagination } from "@heroui/pagination";
+import NextLink from "next/link";
+
+import Loading from "./loading";
+
+import StatisticsCard from "@/components/StatisticsCard";
+import { categories } from "@/dummy/categories";
+import { dummyResponseHistory, dummyResponseHistory2 } from "@/dummy/history";
 
 // Mock data to simulate your existing data structure
 const dummyCategories = [
-  { name: 'All Categories', icon: '📂' },
-  { name: 'Food', icon: '🍔' },
-  { name: 'Salary', icon: '💰' },
-  { name: 'Transportation', icon: '🚗' },
-  { name: 'Utilities', icon: '💡' },
-  { name: 'Shopping', icon: '🛍️' },
-  { name: 'Entertainment', icon: '🎬' },
+  { name: "All Categories", icon: "📂" },
+  { name: "Food", icon: "🍔" },
+  { name: "Salary", icon: "💰" },
+  { name: "Transportation", icon: "🚗" },
+  { name: "Utilities", icon: "💡" },
+  { name: "Shopping", icon: "🛍️" },
+  { name: "Entertainment", icon: "🎬" },
 ];
 
 interface Transaction {
@@ -67,28 +64,30 @@ const allTransactions = [
 ];
 
 export default function TransactionPage() {
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('');
-  const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("");
+  const [viewMode, setViewMode] = useState<"table" | "card">("table");
   const [isMobile, setIsMobile] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState<{ start: any; end: any } | null>(
     null,
   );
   const [page, setPage] = useState(1);
-  const pageSize = viewMode === 'card' || isMobile ? 12 : 10;
+  const pageSize = viewMode === "card" || isMobile ? 12 : 10;
 
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
+
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   useEffect(() => {
-    if (isMobile) setViewMode('card');
+    if (isMobile) setViewMode("card");
   }, [isMobile]);
 
   // Simulate data loading
@@ -96,19 +95,23 @@ export default function TransactionPage() {
     const loadData = async () => {
       setIsLoading(true);
       // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       setIsLoading(false);
     };
+
     loadData();
   }, []);
 
   const filteredTransactions = useMemo(() => {
     let txs = allTransactions;
+
     if (dateRange && dateRange.start && dateRange.end) {
       const start = dateRange.start.toDate(getLocalTimeZone());
       const end = dateRange.end.toDate(getLocalTimeZone());
+
       txs = txs.filter((t: Transaction) => {
         const d = new Date(t.date);
+
         return d >= start && d <= end;
       });
     } // else do not filter by date, show all
@@ -117,42 +120,45 @@ export default function TransactionPage() {
       txs = txs.filter((t: Transaction) =>
         t.desc.toLowerCase().includes(search.toLowerCase()),
       );
+
     return txs;
   }, [search, category, dateRange]);
 
   const totalIncome = filteredTransactions
-    .filter((t) => t.type === 'Pemasukan')
+    .filter((t) => t.type === "Pemasukan")
     .reduce((sum, t) => sum + t.amount, 0);
 
   const totalExpense = filteredTransactions
-    .filter((t) => t.type === 'Pengeluaran')
+    .filter((t) => t.type === "Pengeluaran")
     .reduce((sum, t) => sum + t.amount, 0);
 
   const balance = totalIncome - totalExpense;
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
     }).format(amount);
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
+    return new Date(dateStr).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
     });
   };
 
   const getCategoryIcon = (categoryName: string) => {
     const cat = categories.find((c) => c.name === categoryName);
-    return cat?.icon || '📄';
+
+    return cat?.icon || "📄";
   };
 
   const paginatedTransactions = useMemo(() => {
     const startIdx = (page - 1) * pageSize;
+
     return filteredTransactions.slice(startIdx, startIdx + pageSize);
   }, [filteredTransactions, page, pageSize]);
 
@@ -166,24 +172,24 @@ export default function TransactionPage() {
   }
 
   return (
-    <div className='min-h-screen w-full'>
-      <div className='max-w-7xl mx-auto p-6'>
+    <div className="min-h-screen w-full">
+      <div className="max-w-7xl mx-auto p-6">
         {/* Header Section */}
-        <div className='mb-8'>
-          <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6'>
+        <div className="mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
             <div>
-              <h1 className='text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2'>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
                 Transaction Management
               </h1>
             </div>
-            <div className='flex gap-3'>
-              <Button className='flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105'>
-                <Download className='w-4 h-4' />
+            <div className="flex gap-3">
+              <Button className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105">
+                <Download className="w-4 h-4" />
                 Export
               </Button>
-              <NextLink href='/transaction/add'>
-                <Button className='flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105'>
-                  <Plus className='w-4 h-4' />
+              <NextLink href="/transaction/add">
+                <Button className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105">
+                  <Plus className="w-4 h-4" />
                   Add Transaction
                 </Button>
               </NextLink>
@@ -191,83 +197,84 @@ export default function TransactionPage() {
           </div>
 
           {/* Statistics Cards */}
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <StatisticsCard
-              icon={<TrendingDown className='w-6 h-6 text-red-600' />}
-              label='Total Pengeluaran'
+              icon={<TrendingDown className="w-6 h-6 text-red-600" />}
+              iconBg="bg-red-100 dark:bg-red-900"
+              label="Total Pengeluaran"
               value={formatCurrency(totalExpense)}
-              valueColor='text-red-500'
-              iconBg='bg-red-100 dark:bg-red-900'
+              valueColor="text-red-500"
             />
             <StatisticsCard
-              icon={<TrendingUp className='w-6 h-6 text-green-600' />}
-              label='Total Pemasukan'
+              icon={<TrendingUp className="w-6 h-6 text-green-600" />}
+              iconBg="bg-green-100 dark:bg-green-900"
+              label="Total Pemasukan"
               value={formatCurrency(totalIncome)}
-              valueColor='text-green-500'
-              iconBg='bg-green-100 dark:bg-green-900'
+              valueColor="text-green-500"
             />
             <StatisticsCard
               icon={
                 <div
-                  className={`w-6 h-6 rounded-full ${balance >= 0 ? 'bg-blue-600' : 'bg-orange-600'}`}
+                  className={`w-6 h-6 rounded-full ${balance >= 0 ? "bg-blue-600" : "bg-orange-600"}`}
                 />
               }
-              label='Sisa Budget'
-              value={formatCurrency(balance)}
-              valueColor={balance >= 0 ? 'text-blue-500' : 'text-orange-500'}
               iconBg={
                 balance >= 0
-                  ? 'bg-blue-100 dark:bg-blue-900'
-                  : 'bg-orange-100 dark:bg-orange-900'
+                  ? "bg-blue-100 dark:bg-blue-900"
+                  : "bg-orange-100 dark:bg-orange-900"
               }
+              label="Sisa Budget"
+              value={formatCurrency(balance)}
+              valueColor={balance >= 0 ? "text-blue-500" : "text-orange-500"}
             />
           </div>
         </div>
 
         {/* Filters Section */}
-        <Card className='mb-8'>
+        <Card className="mb-8">
           <CardBody>
-            <div className='flex flex-col lg:flex-row gap-4'>
-              <div className='flex gap-4 flex-1'>
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="flex gap-4 flex-1">
                 <Input
                   isClearable
-                  startContent={<Search className='text-gray-400 w-5 h-5' />}
-                  type='text'
-                  placeholder='Search transactions...'
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onClear={() => setSearch('')}
                   classNames={{
-                    label: 'text-black/50 dark:text-white/90',
+                    label: "text-black/50 dark:text-white/90",
                     input: [
-                      'bg-transparent',
-                      'text-black/90 dark:text-white/90',
-                      'placeholder:text-default-700/50 dark:placeholder:text-white/60',
+                      "bg-transparent",
+                      "text-black/90 dark:text-white/90",
+                      "placeholder:text-default-700/50 dark:placeholder:text-white/60",
                     ],
-                    innerWrapper: 'bg-transparent',
+                    innerWrapper: "bg-transparent",
                     inputWrapper: [
-                      'bg-default-200/50',
-                      'dark:bg-default/60',
-                      'backdrop-blur-xl',
-                      'backdrop-saturate-200',
-                      'hover:bg-default-200/70',
-                      'dark:hover:bg-default/70',
-                      'group-data-[focus=true]:bg-default-200/50',
-                      'dark:group-data-[focus=true]:bg-default/60',
-                      '!cursor-text',
+                      "bg-default-200/50",
+                      "dark:bg-default/60",
+                      "backdrop-blur-xl",
+                      "backdrop-saturate-200",
+                      "hover:bg-default-200/70",
+                      "dark:hover:bg-default/70",
+                      "group-data-[focus=true]:bg-default-200/50",
+                      "dark:group-data-[focus=true]:bg-default/60",
+                      "!cursor-text",
                     ],
                   }}
+                  placeholder="Search transactions..."
+                  startContent={<Search className="text-gray-400 w-5 h-5" />}
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onClear={() => setSearch("")}
                 />
               </div>
-              <div className='flex gap-4 flex-1'>
+              <div className="flex gap-4 flex-1">
                 <Select
-                  label='Category'
+                  className="min-w-[180px]"
+                  label="Category"
                   selectedKeys={category ? [category] : []}
                   onSelectionChange={(keys) => {
                     const val = Array.from(keys)[0] as string;
-                    setCategory(val === 'All Categories' ? '' : val || '');
+
+                    setCategory(val === "All Categories" ? "" : val || "");
                   }}
-                  className='min-w-[180px]'
                 >
                   {dummyCategories.map((cat) => (
                     <SelectItem key={cat.name} textValue={cat.name}>
@@ -278,18 +285,18 @@ export default function TransactionPage() {
                 <Popover>
                   <PopoverTrigger>
                     <Button
-                      variant='bordered'
-                      className='flex items-center gap-2 min-w-[180px] h-[44px] px-4 py-2 border rounded-xl shadow-sm bg-white dark:bg-gray-900 text-gray-700 dark:text-white hover:border-gray-300 transition-colors duration-200'
+                      className="flex items-center gap-2 min-w-[180px] h-[44px] px-4 py-2 border rounded-xl shadow-sm bg-white dark:bg-gray-900 text-gray-700 dark:text-white hover:border-gray-300 transition-colors duration-200"
+                      variant="bordered"
                     >
-                      <Calendar className='w-5 h-5 text-gray-400' />
+                      <Calendar className="w-5 h-5 text-gray-400" />
                       {dateRange && dateRange.start && dateRange.end
-                        ? `${dateRange.start.toDate(getLocalTimeZone()).toLocaleDateString('id-ID')} - ${dateRange.end.toDate(getLocalTimeZone()).toLocaleDateString('id-ID')}`
-                        : 'Semua Tanggal'}
+                        ? `${dateRange.start.toDate(getLocalTimeZone()).toLocaleDateString("id-ID")} - ${dateRange.end.toDate(getLocalTimeZone()).toLocaleDateString("id-ID")}`
+                        : "Semua Tanggal"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className='p-2 bg-white dark:bg-gray-900 rounded-xl shadow-lg'>
+                  <PopoverContent className="p-2 bg-white dark:bg-gray-900 rounded-xl shadow-lg">
                     <RangeCalendar
-                      aria-label='Date Range (Controlled)'
+                      aria-label="Date Range (Controlled)"
                       value={dateRange}
                       onChange={setDateRange}
                     />
@@ -297,14 +304,14 @@ export default function TransactionPage() {
                 </Popover>
                 {!isMobile && (
                   <Tabs
+                    className="min-w-[180px]"
                     selectedKey={viewMode}
                     onSelectionChange={(key) =>
-                      setViewMode(key as 'table' | 'card')
+                      setViewMode(key as "table" | "card")
                     }
-                    className='min-w-[180px]'
                   >
-                    <Tab key='table' title='Table' />
-                    <Tab key='card' title='Cards' />
+                    <Tab key="table" title="Table" />
+                    <Tab key="card" title="Cards" />
                   </Tabs>
                 )}
               </div>
@@ -313,24 +320,24 @@ export default function TransactionPage() {
         </Card>
 
         {/* Transactions Display */}
-        {viewMode === 'table' && !isMobile ? (
+        {viewMode === "table" && !isMobile ? (
           <>
-            <div className='rounded-2xl overflow-hidden'>
-              <div className='overflow-x-auto'>
+            <div className="rounded-2xl overflow-hidden">
+              <div className="overflow-x-auto">
                 <Table
-                  aria-label='Daftar Transaksi'
+                  aria-label="Daftar Transaksi"
                   bottomContent={
                     // Pagination controls
-                    <div className='flex justify-center items-center p-4'>
+                    <div className="flex justify-center items-center p-4">
                       <Pagination
                         isCompact
                         showControls
                         showShadow
-                        total={totalPages}
+                        className="flex items-center gap-2"
                         page={page}
+                        size="md"
+                        total={totalPages}
                         onChange={setPage}
-                        className='flex items-center gap-2'
-                        size='md'
                       />
                     </div>
                   }
@@ -343,22 +350,22 @@ export default function TransactionPage() {
                     <TableColumn>Type</TableColumn>
                     <TableColumn>Actions</TableColumn>
                   </TableHeader>
-                  <TableBody emptyContent={'No transactions found.'}>
+                  <TableBody emptyContent={"No transactions found."}>
                     {paginatedTransactions.map((tx) => (
                       <TableRow key={tx.id}>
-                        <TableCell className='text-foreground'>
+                        <TableCell className="text-foreground">
                           {formatDate(tx.date)}
                         </TableCell>
-                        <TableCell className='text-foreground'>
+                        <TableCell className="text-foreground">
                           {tx.desc}
                         </TableCell>
                         <TableCell>
                           <Chip
-                            color='primary'
-                            variant='flat'
+                            color="primary"
                             startContent={
                               <span>{getCategoryIcon(tx.category)}</span>
                             }
+                            variant="flat"
                           >
                             {tx.category}
                           </Chip>
@@ -366,44 +373,44 @@ export default function TransactionPage() {
                         <TableCell>
                           <span
                             className={
-                              tx.type === 'Pemasukan'
-                                ? 'text-green-600 dark:text-green-400 font-semibold'
-                                : 'text-red-500 dark:text-red-400 font-semibold'
+                              tx.type === "Pemasukan"
+                                ? "text-green-600 dark:text-green-400 font-semibold"
+                                : "text-red-500 dark:text-red-400 font-semibold"
                             }
                           >
-                            {tx.type === 'Pemasukan' ? '+' : '-'}
+                            {tx.type === "Pemasukan" ? "+" : "-"}
                             {formatCurrency(tx.amount)}
                           </span>
                         </TableCell>
                         <TableCell>
                           <Chip
                             color={
-                              tx.type === 'Pemasukan' ? 'success' : 'danger'
+                              tx.type === "Pemasukan" ? "success" : "danger"
                             }
-                            variant='flat'
+                            variant="flat"
                           >
                             {tx.type}
                           </Chip>
                         </TableCell>
                         <TableCell>
-                          <div className='flex gap-2'>
-                            <Tooltip content='View'>
+                          <div className="flex gap-2">
+                            <Tooltip content="View">
                               <NextLink href={`/transaction/view/${tx.id}`}>
-                                <button className='p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg transition-colors duration-150'>
-                                  <Eye className='w-4 h-4' />
+                                <button className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg transition-colors duration-150">
+                                  <Eye className="w-4 h-4" />
                                 </button>
                               </NextLink>
                             </Tooltip>
-                            <Tooltip content='Edit'>
+                            <Tooltip content="Edit">
                               <NextLink href={`/transaction/update/${tx.id}`}>
-                                <button className='p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg transition-colors duration-150'>
-                                  <Edit3 className='w-4 h-4' />
+                                <button className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg transition-colors duration-150">
+                                  <Edit3 className="w-4 h-4" />
                                 </button>
                               </NextLink>
                             </Tooltip>
-                            <Tooltip content='Delete'>
-                              <button className='p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors duration-150'>
-                                <Trash2 className='w-4 h-4' />
+                            <Tooltip content="Delete">
+                              <button className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors duration-150">
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </Tooltip>
                           </div>
@@ -417,63 +424,63 @@ export default function TransactionPage() {
           </>
         ) : (
           <>
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {paginatedCardTransactions.map((tx) => (
                 <Card
                   key={tx.id}
-                  className='hover:shadow-xl transition-all duration-300 hover:scale-105'
+                  className="hover:shadow-xl transition-all duration-300 hover:scale-105"
                 >
-                  <CardHeader className='flex items-start justify-between mb-2 pb-0'>
-                    <div className='flex items-center gap-3'>
-                      <div className='w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center text-lg'>
+                  <CardHeader className="flex items-start justify-between mb-2 pb-0">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center text-lg">
                         {getCategoryIcon(tx.category)}
                       </div>
                       <div>
-                        <h3 className='font-semibold text-gray-900 dark:text-gray-100'>
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">
                           {tx.desc}
                         </h3>
-                        <p className='text-sm text-gray-500 dark:text-gray-400'>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           {formatDate(tx.date)}
                         </p>
                       </div>
                     </div>
                     <Chip
-                      color={tx.type === 'Pemasukan' ? 'success' : 'danger'}
-                      variant='flat'
+                      color={tx.type === "Pemasukan" ? "success" : "danger"}
+                      variant="flat"
                     >
                       {tx.type}
                     </Chip>
                   </CardHeader>
-                  <CardBody className='mb-2'>
+                  <CardBody className="mb-2">
                     <Chip
-                      color='primary'
-                      variant='flat'
+                      color="primary"
                       startContent={<span>{getCategoryIcon(tx.category)}</span>}
+                      variant="flat"
                     >
                       {tx.category}
                     </Chip>
                   </CardBody>
-                  <CardFooter className='flex items-center justify-between pt-0'>
+                  <CardFooter className="flex items-center justify-between pt-0">
                     <span
-                      className={`text-xl font-bold ${tx.type === 'Pemasukan' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
+                      className={`text-xl font-bold ${tx.type === "Pemasukan" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
                     >
-                      {tx.type === 'Pemasukan' ? '+' : '-'}
+                      {tx.type === "Pemasukan" ? "+" : "-"}
                       {formatCurrency(tx.amount)}
                     </span>
-                    <div className='flex gap-1'>
-                      <Tooltip content='View'>
-                        <button className='p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg transition-colors duration-150'>
-                          <Eye className='w-4 h-4' />
+                    <div className="flex gap-1">
+                      <Tooltip content="View">
+                        <button className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg transition-colors duration-150">
+                          <Eye className="w-4 h-4" />
                         </button>
                       </Tooltip>
-                      <Tooltip content='Edit'>
-                        <button className='p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg transition-colors duration-150'>
-                          <Edit3 className='w-4 h-4' />
+                      <Tooltip content="Edit">
+                        <button className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg transition-colors duration-150">
+                          <Edit3 className="w-4 h-4" />
                         </button>
                       </Tooltip>
-                      <Tooltip content='Delete'>
-                        <button className='p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors duration-150'>
-                          <Trash2 className='w-4 h-4' />
+                      <Tooltip content="Delete">
+                        <button className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors duration-150">
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </Tooltip>
                     </div>
@@ -481,16 +488,16 @@ export default function TransactionPage() {
                 </Card>
               ))}
             </div>
-            <div className='flex justify-center mt-6'>
+            <div className="flex justify-center mt-6">
               <Pagination
                 isCompact
                 showControls
                 showShadow
-                total={totalPages}
+                className="flex items-center gap-2"
                 page={page}
+                size="md"
+                total={totalPages}
                 onChange={setPage}
-                className='flex items-center gap-2'
-                size='md'
               />
             </div>
           </>

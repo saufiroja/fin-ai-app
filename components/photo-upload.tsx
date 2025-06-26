@@ -1,24 +1,24 @@
-'use client';
-import React from 'react';
-import { Card, CardBody } from '@heroui/card';
-import { Button } from '@heroui/button';
-import { Input } from '@heroui/input';
-import { UploadCloud } from 'lucide-react';
-import { getLocalTimeZone } from '@internationalized/date';
-import { Progress } from '@heroui/progress';
-import { Form as HeroForm } from '@heroui/form';
-import { Input as HeroInput } from '@heroui/input';
-import { Select, SelectSection, SelectItem } from '@heroui/select';
+"use client";
+import React from "react";
+import { Card, CardBody } from "@heroui/card";
+import { Button } from "@heroui/button";
+import { Input } from "@heroui/input";
+import { UploadCloud } from "lucide-react";
+import { Progress } from "@heroui/progress";
+import { Form as HeroForm } from "@heroui/form";
+import { Input as HeroInput } from "@heroui/input";
+import { Select, SelectSection, SelectItem } from "@heroui/select";
+import Image from "next/image";
 
 // Dummy transaction extraction for receipt
 const extractTransactionFromReceipt = (file: File) => {
-  // Simulate extracting transaction from receipt image
+  // Simulate extracting transaction data from the receipt image
   return {
-    date: new Date().toLocaleDateString('id-ID'),
-    desc: 'Receipt Transaction',
-    category: 'Food',
-    amount: 50000,
-    type: 'Pengeluaran',
+    date: new Date().toLocaleDateString("id-ID"),
+    desc: file.name,
+    category: "Belanja",
+    amount: (Math.random() * 1000000).toFixed(2),
+    type: "Pengeluaran",
   };
 };
 
@@ -49,13 +49,15 @@ export const PhotoUpload: React.FC = () => {
     e.preventDefault();
     setIsDragging(false);
     const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile && droppedFile.type.startsWith('image/')) {
+
+    if (droppedFile && droppedFile.type.startsWith("image/")) {
       setFile(droppedFile);
     }
   };
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
-    if (selectedFile && selectedFile.type.startsWith('image/')) {
+
+    if (selectedFile && selectedFile.type.startsWith("image/")) {
       setFile(selectedFile);
     }
   };
@@ -75,13 +77,16 @@ export const PhotoUpload: React.FC = () => {
           // Simulate extracting transaction from receipt
           if (file) {
             const extracted = extractTransactionFromReceipt(file);
+
             setTransaction({
               ...extracted,
-              type: extracted.type || 'Pengeluaran',
+              type: extracted.type || "Pengeluaran",
             });
           }
+
           return 100;
         }
+
         return prev + 10;
       });
     }, 150);
@@ -89,7 +94,7 @@ export const PhotoUpload: React.FC = () => {
   const handleEdit = () => {
     setEditTransaction({
       ...transaction,
-      type: transaction.type || 'Pengeluaran',
+      type: transaction.type || "Pengeluaran",
     });
     setEditMode(true);
   };
@@ -97,6 +102,7 @@ export const PhotoUpload: React.FC = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
+
     setEditTransaction((prev: any) => ({ ...prev, [name]: value }));
   };
   const handleSave = () => {
@@ -105,7 +111,6 @@ export const PhotoUpload: React.FC = () => {
     setSaved(true);
     setShowSavedMsg(true);
     setTimeout(() => {
-      setSaved(false);
       setShowSavedMsg(false);
       setFile(null);
       setTransaction(null);
@@ -113,6 +118,7 @@ export const PhotoUpload: React.FC = () => {
       setProgress(0);
       setUploading(false);
       setEditMode(false);
+      setSaved(false);
     }, 1200);
   };
 
@@ -120,8 +126,8 @@ export const PhotoUpload: React.FC = () => {
     <Card
       className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors duration-200 ${
         isDragging
-          ? 'border-primary bg-primary/10'
-          : 'border-default-300 bg-background'
+          ? "border-primary bg-primary/10"
+          : "border-default-300 bg-background"
       }`}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
@@ -130,91 +136,104 @@ export const PhotoUpload: React.FC = () => {
     >
       <CardBody>
         {file ? (
-          <div className='space-y-4'>
-            <img
+          <div className="space-y-4">
+            <Image
+              alt="Uploaded preview"
+              className="max-h-48 mx-auto object-contain rounded-xl border border-default-200 shadow-sm"
               src={URL.createObjectURL(file)}
-              alt='Uploaded preview'
-              className='max-h-48 mx-auto object-contain rounded-xl border border-default-200 shadow-sm'
             />
-            <div className='text-default-600 font-medium'>{file.name}</div>
+            <div className="text-default-600 font-medium">{file.name}</div>
             {uploading ? (
               <Progress
-                value={progress}
+                aria-label="Uploading..."
+                className="w-full h-2 rounded bg-default-100"
                 maxValue={100}
-                aria-label='Uploading...'
-                className='w-full h-2 rounded bg-default-100'
-                size='sm'
+                size="sm"
+                value={progress}
               />
             ) : transaction ? (
-              <div className='mt-4 p-4 rounded-xl bg-default-100 text-left'>
-                <div className='font-semibold mb-2'>
-                  Transaction Extracted from Receipt:
+              <div
+                className={`mt-4 p-4 rounded-xl text-left transition-colors duration-300 ${
+                  saved
+                    ? "bg-success-50 border border-success-200"
+                    : "bg-default-100"
+                }`}
+              >
+                <div className="font-semibold mb-2 flex items-center justify-between">
+                  <span>Transaction Extracted from Receipt:</span>
+                  {saved && (
+                    <span className="text-success-600 text-sm font-medium bg-success-100 px-2 py-1 rounded-full">
+                      ✓ Saved
+                    </span>
+                  )}
                 </div>
                 {editMode ? (
                   <HeroForm
-                    className='flex flex-col gap-2'
+                    className="flex flex-col gap-2"
                     onSubmit={(e) => e.preventDefault()}
                   >
                     <HeroInput
-                      label='Date'
-                      name='date'
+                      className="border rounded px-2 py-1"
+                      label="Date"
+                      name="date"
                       value={editTransaction.date}
                       onChange={handleEditChange}
-                      className='border rounded px-2 py-1'
                     />
                     <HeroInput
-                      label='Description'
-                      name='desc'
+                      className="border rounded px-2 py-1"
+                      label="Description"
+                      name="desc"
                       value={editTransaction.desc}
                       onChange={handleEditChange}
-                      className='border rounded px-2 py-1'
                     />
                     <HeroInput
-                      label='Category'
-                      name='category'
+                      className="border rounded px-2 py-1"
+                      label="Category"
+                      name="category"
                       value={editTransaction.category}
                       onChange={handleEditChange}
-                      className='border rounded px-2 py-1'
                     />
                     <HeroInput
-                      label='Amount'
-                      name='amount'
-                      type='number'
+                      className="border rounded px-2 py-1"
+                      label="Amount"
+                      name="amount"
+                      type="number"
                       value={editTransaction.amount}
                       onChange={handleEditChange}
-                      className='border rounded px-2 py-1'
                     />
                     <Select
-                      label='Type'
-                      name='type'
+                      className="border rounded px-2 py-1"
+                      label="Type"
+                      name="type"
                       selectedKeys={[editTransaction.type]}
                       onSelectionChange={(keys) =>
                         handleEditChange({
                           target: {
-                            name: 'type',
+                            name: "type",
                             value: Array.isArray(keys) ? keys[0] : keys,
                           },
                         } as any)
                       }
-                      className='border rounded px-2 py-1'
                     >
                       <SelectSection>
-                        <SelectItem key='Pemasukan'>Pemasukan</SelectItem>
-                        <SelectItem key='Pengeluaran'>Pengeluaran</SelectItem>
+                        <SelectItem key="Pemasukan">Pemasukan</SelectItem>
+                        <SelectItem key="Pengeluaran">Pengeluaran</SelectItem>
                       </SelectSection>
                     </Select>
-                    <div className='flex gap-2 mt-2'>
+                    <div className="flex gap-2 mt-2">
                       <Button
-                        color='primary'
+                        color="primary"
+                        disabled={saved}
+                        type="button"
                         onPress={handleSave}
-                        type='button'
                       >
-                        Save
+                        {saved ? "Saved ✓" : "Save"}
                       </Button>
                       <Button
-                        color='secondary'
+                        color="secondary"
+                        disabled={saved}
+                        type="button"
                         onPress={() => setEditMode(false)}
-                        type='button'
                       >
                         Cancel
                       </Button>
@@ -222,7 +241,7 @@ export const PhotoUpload: React.FC = () => {
                   </HeroForm>
                 ) : (
                   <>
-                    <div className='flex flex-col gap-1'>
+                    <div className="flex flex-col gap-1">
                       <span>
                         <b>Date:</b> {transaction.date}
                       </span>
@@ -233,23 +252,24 @@ export const PhotoUpload: React.FC = () => {
                         <b>Category:</b> {transaction.category}
                       </span>
                       <span>
-                        <b>Amount:</b> Rp{' '}
-                        {Number(transaction.amount).toLocaleString('id-ID')}
+                        <b>Amount:</b> Rp{" "}
+                        {Number(transaction.amount).toLocaleString("id-ID")}
                       </span>
                       <span>
                         <b>Type:</b> {transaction.type}
                       </span>
                     </div>
-                    <div className='flex gap-2 mt-4'>
+                    <div className="flex gap-2 mt-4">
                       <Button
-                        color='primary'
+                        color="primary"
+                        disabled={saved}
+                        type="button"
                         onPress={() => {
                           setEditTransaction(transaction);
                           setTransaction(transaction);
                           setSaved(true);
                           setShowSavedMsg(true);
                           setTimeout(() => {
-                            setSaved(false);
                             setShowSavedMsg(false);
                             setFile(null);
                             setTransaction(null);
@@ -257,23 +277,25 @@ export const PhotoUpload: React.FC = () => {
                             setProgress(0);
                             setUploading(false);
                             setEditMode(false);
+                            setSaved(false);
                           }, 1200);
                         }}
-                        type='button'
                       >
-                        Save
+                        {saved ? "Saved ✓" : "Save"}
                       </Button>
                       <Button
-                        color='primary'
+                        color="primary"
+                        disabled={saved}
+                        type="button"
                         onPress={handleEdit}
-                        type='button'
                       >
                         Edit
                       </Button>
                       <Button
-                        color='danger'
+                        color="danger"
+                        disabled={saved}
+                        type="button"
                         onPress={() => setFile(null)}
-                        type='button'
                       >
                         Cancel
                       </Button>
@@ -282,47 +304,47 @@ export const PhotoUpload: React.FC = () => {
                 )}
               </div>
             ) : (
-              <div className='flex flex-col gap-2'>
+              <div className="flex flex-col gap-2">
                 <Button
-                  color='primary'
-                  onPress={handleUpload}
+                  color="primary"
                   disabled={uploading}
+                  onPress={handleUpload}
                 >
                   Upload Photo
                 </Button>
-                <Button variant='light' onPress={() => setFile(null)}>
+                <Button variant="light" onPress={() => setFile(null)}>
                   Choose Another
                 </Button>
               </div>
             )}
             {showSavedMsg && (
-              <div className='text-success-600 font-semibold py-2'>
+              <div className="text-success-600 font-semibold py-2">
                 Transaction saved successfully!
               </div>
             )}
           </div>
         ) : (
           <div
-            className='flex flex-col items-center gap-4 cursor-pointer select-none'
-            onClick={handleButtonClick}
+            className="flex flex-col items-center gap-4 cursor-pointer select-none"
+            role="button"
             tabIndex={0}
-            role='button'
+            onClick={handleButtonClick}
             onKeyDown={(e) =>
-              (e.key === 'Enter' || e.key === ' ') && handleButtonClick()
+              (e.key === "Enter" || e.key === " ") && handleButtonClick()
             }
           >
-            <div className='flex items-center justify-center w-20 h-20 rounded-full bg-default-100 dark:bg-default-900 mb-2'>
-              <UploadCloud className='w-10 h-10 text-default-400' />
+            <div className="flex items-center justify-center w-20 h-20 rounded-full bg-default-100 dark:bg-default-900 mb-2">
+              <UploadCloud className="w-10 h-10 text-default-400" />
             </div>
-            <div className='text-default-600 mb-2'>
+            <div className="text-default-600 mb-2">
               Drag & drop atau klik area ini untuk memilih foto (max 50MB)
             </div>
             <Input
-              type='file'
               ref={fileInputRef}
+              accept="image/*"
+              className="hidden"
+              type="file"
               onChange={handleFileInput}
-              accept='image/*'
-              className='hidden'
             />
           </div>
         )}
