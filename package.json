@@ -37,6 +37,7 @@
     "@heroui/tabs": "^2.2.18",
     "@heroui/theme": "2.4.17",
     "@heroui/tooltip": "^2.2.18",
+    "@netlify/plugin-nextjs": "^5.11.4",
     "@react-aria/ssr": "3.9.9",
     "@react-aria/visually-hidden": "3.8.24",
     "clsx": "2.1.1",
