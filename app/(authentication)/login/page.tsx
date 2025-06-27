@@ -21,7 +21,7 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     // Simulate API call
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -63,42 +63,32 @@ export default function LoginPage() {
               </p>
             </div>
           </CardHeader>
-          
+
           <CardBody className="pt-0">
-            <form onSubmit={handleLogin} className="space-y-6">
+            <form className="space-y-6" onSubmit={handleLogin}>
               {/* Email Input */}
               <Input
-                type="email"
-                label="Email Address"
-                placeholder="Enter your email"
-                value={email}
-                onValueChange={setEmail}
-                startContent={
-                  <Icon
-                    className="text-default-400"
-                    icon="lucide:mail"
-                  />
-                }
+                isRequired
                 classNames={{
                   inputWrapper: "border-primary/40 focus-within:border-primary",
                 }}
+                label="Email Address"
+                placeholder="Enter your email"
+                startContent={
+                  <Icon className="text-default-400" icon="lucide:mail" />
+                }
+                type="email"
+                value={email}
                 variant="bordered"
-                isRequired
+                onValueChange={setEmail}
               />
 
               {/* Password Input */}
               <Input
-                type={isPasswordVisible ? "text" : "password"}
-                label="Password"
-                placeholder="Enter your password"
-                value={password}
-                onValueChange={setPassword}
-                startContent={
-                  <Icon
-                    className="text-default-400"
-                    icon="lucide:lock"
-                  />
-                }
+                isRequired
+                classNames={{
+                  inputWrapper: "border-primary/40 focus-within:border-primary",
+                }}
                 endContent={
                   <button
                     className="focus:outline-none"
@@ -112,19 +102,23 @@ export default function LoginPage() {
                     )}
                   </button>
                 }
-                classNames={{
-                  inputWrapper: "border-primary/40 focus-within:border-primary",
-                }}
+                label="Password"
+                placeholder="Enter your password"
+                startContent={
+                  <Icon className="text-default-400" icon="lucide:lock" />
+                }
+                type={isPasswordVisible ? "text" : "password"}
+                value={password}
                 variant="bordered"
-                isRequired
+                onValueChange={setPassword}
               />
 
               {/* Forgot Password Link */}
               <div className="flex justify-end">
                 <Link
+                  className="text-primary hover:text-primary/80"
                   href="/forgot-password"
                   size="sm"
-                  className="text-primary hover:text-primary/80"
                 >
                   Forgot password?
                 </Link>
@@ -132,11 +126,11 @@ export default function LoginPage() {
 
               {/* Login Button */}
               <Button
-                type="submit"
                 className="w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold"
-                size="lg"
-                isLoading={isLoading}
                 isDisabled={!email || !password}
+                isLoading={isLoading}
+                size="lg"
+                type="submit"
               >
                 {isLoading ? "Signing In..." : "Sign In"}
               </Button>
@@ -152,20 +146,16 @@ export default function LoginPage() {
             {/* Social Login Buttons */}
             <div className="grid grid-cols-2 gap-4">
               <Button
-                variant="bordered"
                 className="border-default-300 hover:border-primary/50"
-                startContent={
-                  <Icon icon="lucide:github" className="text-lg" />
-                }
+                startContent={<Icon className="text-lg" icon="lucide:github" />}
+                variant="bordered"
               >
                 GitHub
               </Button>
               <Button
-                variant="bordered"
                 className="border-default-300 hover:border-primary/50"
-                startContent={
-                  <Icon icon="lucide:chrome" className="text-lg" />
-                }
+                startContent={<Icon className="text-lg" icon="lucide:chrome" />}
+                variant="bordered"
               >
                 Google
               </Button>
@@ -174,10 +164,10 @@ export default function LoginPage() {
             {/* Sign Up Link */}
             <div className="text-center mt-6">
               <p className="text-default-500 text-sm">
-                Don't have an account?{" "}
+                Don&apos;t have an account?
                 <Link
-                  href="/register"
                   className="text-primary hover:text-primary/80 font-medium"
+                  href="/register"
                 >
                   Sign up
                 </Link>

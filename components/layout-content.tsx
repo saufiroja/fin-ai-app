@@ -1,22 +1,20 @@
 "use client";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
+
 import { Navbar } from "@/components/navbar";
 
 export function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAuthPage = pathname?.startsWith('/login') || 
-                    pathname?.startsWith('/register') || 
-                    pathname?.startsWith('/forgot-password') ||
-                    pathname?.startsWith('/verify-otp') ||
-                    pathname?.startsWith('/reset-password');
+  const isAuthPage =
+    pathname?.startsWith("/login") ||
+    pathname?.startsWith("/register") ||
+    pathname?.startsWith("/forgot-password") ||
+    pathname?.startsWith("/verify-otp") ||
+    pathname?.startsWith("/reset-password");
 
   if (isAuthPage) {
-    return (
-      <div className="min-h-screen w-full">
-        {children}
-      </div>
-    );
+    return <div className="min-h-screen w-full">{children}</div>;
   }
 
   return (

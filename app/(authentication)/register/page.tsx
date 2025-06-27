@@ -5,7 +5,6 @@ import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
 import { Link } from "@heroui/link";
 import { Divider } from "@heroui/divider";
-import { Checkbox } from "@heroui/checkbox";
 import { Icon } from "@iconify/react";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -18,10 +17,11 @@ export default function RegisterPage() {
     confirmPassword: "",
   });
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
+    useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
@@ -32,15 +32,15 @@ export default function RegisterPage() {
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }));
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
   const validateForm = () => {
-    const newErrors: {[key: string]: string} = {};
+    const newErrors: { [key: string]: string } = {};
 
     if (!formData.firstName.trim()) {
       newErrors.firstName = "First name is required";
@@ -73,18 +73,19 @@ export default function RegisterPage() {
     }
 
     setErrors(newErrors);
+
     return Object.keys(newErrors).length === 0;
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsLoading(true);
-    
+
     // Simulate API call
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -97,12 +98,13 @@ export default function RegisterPage() {
     }
   };
 
-  const isFormValid = formData.firstName && 
-                     formData.lastName && 
-                     formData.email && 
-                     formData.password && 
-                     formData.confirmPassword && 
-                     acceptTerms;
+  const isFormValid =
+    formData.firstName &&
+    formData.lastName &&
+    formData.email &&
+    formData.password &&
+    formData.confirmPassword &&
+    acceptTerms;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-content1 p-4">
@@ -127,95 +129,85 @@ export default function RegisterPage() {
         <Card className="w-full bg-content1/80 backdrop-blur-xl shadow-2xl">
           <CardHeader className="pb-4">
             <div className="w-full text-center">
-              <h2 className="text-2xl font-bold text-foreground">Create Account</h2>
+              <h2 className="text-2xl font-bold text-foreground">
+                Create Account
+              </h2>
               <p className="text-default-500 text-sm mt-1">
                 Fill in your details to get started
               </p>
             </div>
           </CardHeader>
-          
+
           <CardBody className="pt-0">
-            <form onSubmit={handleRegister} className="space-y-4">
+            <form className="space-y-4" onSubmit={handleRegister}>
               {/* Name Fields */}
               <div className="grid grid-cols-2 gap-4">
                 <Input
-                  type="text"
+                  isRequired
+                  classNames={{
+                    inputWrapper: `border-primary/40 focus-within:border-primary ${errors.firstName ? "border-danger" : ""}`,
+                  }}
+                  errorMessage={errors.firstName}
+                  isInvalid={!!errors.firstName}
                   label="First Name"
                   placeholder="Enter first name"
-                  value={formData.firstName}
-                  onValueChange={(value) => handleInputChange("firstName", value)}
                   startContent={
-                    <Icon
-                      className="text-default-400"
-                      icon="lucide:user"
-                    />
+                    <Icon className="text-default-400" icon="lucide:user" />
                   }
-                  classNames={{
-                    inputWrapper: `border-primary/40 focus-within:border-primary ${errors.firstName ? 'border-danger' : ''}`,
-                  }}
+                  type="text"
+                  value={formData.firstName}
                   variant="bordered"
-                  isRequired
-                  isInvalid={!!errors.firstName}
-                  errorMessage={errors.firstName}
+                  onValueChange={(value) =>
+                    handleInputChange("firstName", value)
+                  }
                 />
 
                 <Input
-                  type="text"
+                  isRequired
+                  classNames={{
+                    inputWrapper: `border-primary/40 focus-within:border-primary ${errors.lastName ? "border-danger" : ""}`,
+                  }}
+                  errorMessage={errors.lastName}
+                  isInvalid={!!errors.lastName}
                   label="Last Name"
                   placeholder="Enter last name"
-                  value={formData.lastName}
-                  onValueChange={(value) => handleInputChange("lastName", value)}
                   startContent={
-                    <Icon
-                      className="text-default-400"
-                      icon="lucide:user"
-                    />
+                    <Icon className="text-default-400" icon="lucide:user" />
                   }
-                  classNames={{
-                    inputWrapper: `border-primary/40 focus-within:border-primary ${errors.lastName ? 'border-danger' : ''}`,
-                  }}
+                  type="text"
+                  value={formData.lastName}
                   variant="bordered"
-                  isRequired
-                  isInvalid={!!errors.lastName}
-                  errorMessage={errors.lastName}
+                  onValueChange={(value) =>
+                    handleInputChange("lastName", value)
+                  }
                 />
               </div>
 
               {/* Email Input */}
               <Input
-                type="email"
+                isRequired
+                classNames={{
+                  inputWrapper: `border-primary/40 focus-within:border-primary ${errors.email ? "border-danger" : ""}`,
+                }}
+                errorMessage={errors.email}
+                isInvalid={!!errors.email}
                 label="Email Address"
                 placeholder="Enter your email"
-                value={formData.email}
-                onValueChange={(value) => handleInputChange("email", value)}
                 startContent={
-                  <Icon
-                    className="text-default-400"
-                    icon="lucide:mail"
-                  />
+                  <Icon className="text-default-400" icon="lucide:mail" />
                 }
-                classNames={{
-                  inputWrapper: `border-primary/40 focus-within:border-primary ${errors.email ? 'border-danger' : ''}`,
-                }}
+                type="email"
+                value={formData.email}
                 variant="bordered"
-                isRequired
-                isInvalid={!!errors.email}
-                errorMessage={errors.email}
+                onValueChange={(value) => handleInputChange("email", value)}
               />
 
               {/* Password Input */}
               <Input
-                type={isPasswordVisible ? "text" : "password"}
-                label="Password"
-                placeholder="Create a password"
-                value={formData.password}
-                onValueChange={(value) => handleInputChange("password", value)}
-                startContent={
-                  <Icon
-                    className="text-default-400"
-                    icon="lucide:lock"
-                  />
-                }
+                isRequired
+                classNames={{
+                  inputWrapper: `border-primary/40 focus-within:border-primary ${errors.password ? "border-danger" : ""}`,
+                }}
                 endContent={
                   <button
                     className="focus:outline-none"
@@ -229,28 +221,25 @@ export default function RegisterPage() {
                     )}
                   </button>
                 }
-                classNames={{
-                  inputWrapper: `border-primary/40 focus-within:border-primary ${errors.password ? 'border-danger' : ''}`,
-                }}
-                variant="bordered"
-                isRequired
-                isInvalid={!!errors.password}
                 errorMessage={errors.password}
+                isInvalid={!!errors.password}
+                label="Password"
+                placeholder="Create a password"
+                startContent={
+                  <Icon className="text-default-400" icon="lucide:lock" />
+                }
+                type={isPasswordVisible ? "text" : "password"}
+                value={formData.password}
+                variant="bordered"
+                onValueChange={(value) => handleInputChange("password", value)}
               />
 
               {/* Confirm Password Input */}
               <Input
-                type={isConfirmPasswordVisible ? "text" : "password"}
-                label="Confirm Password"
-                placeholder="Confirm your password"
-                value={formData.confirmPassword}
-                onValueChange={(value) => handleInputChange("confirmPassword", value)}
-                startContent={
-                  <Icon
-                    className="text-default-400"
-                    icon="lucide:lock"
-                  />
-                }
+                isRequired
+                classNames={{
+                  inputWrapper: `border-primary/40 focus-within:border-primary ${errors.confirmPassword ? "border-danger" : ""}`,
+                }}
                 endContent={
                   <button
                     className="focus:outline-none"
@@ -264,22 +253,28 @@ export default function RegisterPage() {
                     )}
                   </button>
                 }
-                classNames={{
-                  inputWrapper: `border-primary/40 focus-within:border-primary ${errors.confirmPassword ? 'border-danger' : ''}`,
-                }}
-                variant="bordered"
-                isRequired
-                isInvalid={!!errors.confirmPassword}
                 errorMessage={errors.confirmPassword}
+                isInvalid={!!errors.confirmPassword}
+                label="Confirm Password"
+                placeholder="Confirm your password"
+                startContent={
+                  <Icon className="text-default-400" icon="lucide:lock" />
+                }
+                type={isConfirmPasswordVisible ? "text" : "password"}
+                value={formData.confirmPassword}
+                variant="bordered"
+                onValueChange={(value) =>
+                  handleInputChange("confirmPassword", value)
+                }
               />
 
               {/* Register Button */}
               <Button
-                type="submit"
                 className="w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold"
-                size="lg"
-                isLoading={isLoading}
                 isDisabled={!isFormValid}
+                isLoading={isLoading}
+                size="lg"
+                type="submit"
               >
                 {isLoading ? "Creating Account..." : "Create Account"}
               </Button>
@@ -295,20 +290,16 @@ export default function RegisterPage() {
             {/* Social Register Buttons */}
             <div className="grid grid-cols-2 gap-4">
               <Button
-                variant="bordered"
                 className="border-default-300 hover:border-primary/50"
-                startContent={
-                  <Icon icon="lucide:github" className="text-lg" />
-                }
+                startContent={<Icon className="text-lg" icon="lucide:github" />}
+                variant="bordered"
               >
                 GitHub
               </Button>
               <Button
-                variant="bordered"
                 className="border-default-300 hover:border-primary/50"
-                startContent={
-                  <Icon icon="lucide:chrome" className="text-lg" />
-                }
+                startContent={<Icon className="text-lg" icon="lucide:chrome" />}
+                variant="bordered"
               >
                 Google
               </Button>
@@ -319,8 +310,8 @@ export default function RegisterPage() {
               <p className="text-default-500 text-sm">
                 Already have an account?{" "}
                 <Link
-                  href="/login"
                   className="text-primary hover:text-primary/80 font-medium"
+                  href="/login"
                 >
                   Sign in
                 </Link>

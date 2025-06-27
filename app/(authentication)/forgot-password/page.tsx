@@ -18,20 +18,22 @@ export default function ForgotPasswordPage() {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email.trim()) {
       setError("Email is required");
+
       return;
     }
 
     if (!validateEmail(email)) {
       setError("Please enter a valid email address");
+
       return;
     }
 
     setError("");
     setIsLoading(true);
-    
+
     // Simulate API call
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -48,7 +50,7 @@ export default function ForgotPasswordPage() {
 
   const handleResendEmail = async () => {
     setIsLoading(true);
-    
+
     try {
       await new Promise((resolve) => setTimeout(resolve, 1500));
       console.log("Resending reset email to:", email);
@@ -89,9 +91,11 @@ export default function ForgotPasswordPage() {
                       icon="lucide:key-round"
                     />
                   </div>
-                  <h2 className="text-2xl font-bold text-foreground">Forgot Password?</h2>
+                  <h2 className="text-2xl font-bold text-foreground">
+                    Forgot Password?
+                  </h2>
                   <p className="text-default-500 text-sm mt-1">
-                    No worries, we'll send you reset instructions
+                    No worries, we&apos;ll send you reset instructions
                   </p>
                 </>
               ) : (
@@ -102,50 +106,49 @@ export default function ForgotPasswordPage() {
                       icon="lucide:mail-check"
                     />
                   </div>
-                  <h2 className="text-2xl font-bold text-foreground">Email Sent!</h2>
+                  <h2 className="text-2xl font-bold text-foreground">
+                    Email Sent!
+                  </h2>
                   <p className="text-default-500 text-sm mt-1">
-                    We've sent password reset instructions to your email
+                    We&apos;ve sent password reset instructions to your email
                   </p>
                 </>
               )}
             </div>
           </CardHeader>
-          
+
           <CardBody className="pt-0">
             {!isEmailSent ? (
-              <form onSubmit={handleResetPassword} className="space-y-6">
+              <form className="space-y-6" onSubmit={handleResetPassword}>
                 {/* Email Input */}
                 <Input
-                  type="email"
+                  isRequired
+                  classNames={{
+                    inputWrapper: `border-primary/40 focus-within:border-primary ${error ? "border-danger" : ""}`,
+                  }}
+                  errorMessage={error}
+                  isInvalid={!!error}
                   label="Email Address"
                   placeholder="Enter your email address"
+                  startContent={
+                    <Icon className="text-default-400" icon="lucide:mail" />
+                  }
+                  type="email"
                   value={email}
+                  variant="bordered"
                   onValueChange={(value) => {
                     setEmail(value);
                     if (error) setError("");
                   }}
-                  startContent={
-                    <Icon
-                      className="text-default-400"
-                      icon="lucide:mail"
-                    />
-                  }
-                  classNames={{
-                    inputWrapper: `border-primary/40 focus-within:border-primary ${error ? 'border-danger' : ''}`,
-                  }}
-                  variant="bordered"
-                  isRequired
-                  isInvalid={!!error}
-                  errorMessage={error}
                 />
 
                 {/* Reset Button */}
                 <Button
-                  type="submit"
                   className="w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold"
-                  size="lg"
-                  isLoading={isLoading}
                   isDisabled={!email}
+                  isLoading={isLoading}
+                  size="lg"
+                  type="submit"
                 >
                   {isLoading ? "Sending..." : "Send Reset Instructions"}
                 </Button>
@@ -153,10 +156,10 @@ export default function ForgotPasswordPage() {
                 {/* Back to Login */}
                 <div className="text-center">
                   <Link
-                    href="/login"
                     className="text-primary hover:text-primary/80 font-medium inline-flex items-center gap-2"
+                    href="/login"
                   >
-                    <Icon icon="lucide:arrow-left" className="text-sm" />
+                    <Icon className="text-sm" icon="lucide:arrow-left" />
                     Back to sign in
                   </Link>
                 </div>
@@ -166,13 +169,14 @@ export default function ForgotPasswordPage() {
                 {/* Success Message */}
                 <div className="text-center space-y-3">
                   <p className="text-default-600">
-                    We've sent a password reset link to:
+                    We&apos;ve sent a password reset link to:
                   </p>
                   <p className="font-semibold text-foreground bg-default-100 rounded-lg py-2 px-3">
                     {email}
                   </p>
                   <p className="text-default-500 text-sm">
-                    Didn't receive the email? Check your spam folder or try again.
+                    Didn&apos;t receive the email? Check your spam folder or try
+                    again.
                   </p>
                 </div>
 
@@ -180,17 +184,17 @@ export default function ForgotPasswordPage() {
                 <div className="space-y-3">
                   <Button
                     className="w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold"
-                    size="lg"
                     isLoading={isLoading}
+                    size="lg"
                     onPress={handleResendEmail}
                   >
                     {isLoading ? "Resending..." : "Resend Email"}
                   </Button>
 
                   <Button
-                    variant="bordered"
                     className="w-full border-default-300 hover:border-primary/50"
                     size="lg"
+                    variant="bordered"
                     onPress={() => {
                       setIsEmailSent(false);
                       setEmail("");
@@ -204,10 +208,10 @@ export default function ForgotPasswordPage() {
                 {/* Back to Login */}
                 <div className="text-center">
                   <Link
-                    href="/login"
                     className="text-primary hover:text-primary/80 font-medium inline-flex items-center gap-2"
+                    href="/login"
                   >
-                    <Icon icon="lucide:arrow-left" className="text-sm" />
+                    <Icon className="text-sm" icon="lucide:arrow-left" />
                     Back to sign in
                   </Link>
                 </div>
@@ -220,7 +224,7 @@ export default function ForgotPasswordPage() {
         <div className="text-center mt-8">
           <p className="text-default-400 text-sm">
             Still having trouble?{" "}
-            <Link href="#" className="text-primary hover:text-primary/80">
+            <Link className="text-primary hover:text-primary/80" href="#">
               Contact support
             </Link>
           </p>
