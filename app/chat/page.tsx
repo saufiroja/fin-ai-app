@@ -160,7 +160,7 @@ export default function ChatPage() {
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <Button
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
           onPress={() => setSidebarOpen(false)}
         />
       )}
@@ -236,6 +236,7 @@ export default function ChatPage() {
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         md:w-80 md:block
       `}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header Section - Fixed */}
         <CardHeader className="pb-4 flex-shrink-0">
@@ -328,7 +329,8 @@ export default function ChatPage() {
                     .map((chat) => (
                       <div key={chat.id} className="relative group">
                         <button
-                          className="w-full p-0 transition-all duration-200 bg-content2/50 hover:bg-content2/80 hover:shadow-lg shadow-none rounded-md cursor-pointer text-left border-none"
+                          className="w-full transition-all duration-200 bg-content2/50 hover:bg-content2/80 hover:shadow-lg shadow-none rounded-md cursor-pointer text-left border-none py-2 px-4 relative"
+                          type="button"
                           onClick={() => {
                             setSelectedChat(chat.title);
                             setSelectedChatId(chat.id);
@@ -349,68 +351,70 @@ export default function ChatPage() {
                             }, 200);
                           }}
                         >
-                          <div className="py-2 px-4 relative">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2 w-full">
-                                <div className="w-full flex items-center gap-2">
-                                  <h4 className="text-sm font-medium truncate max-w-full block">
-                                    {chat.title}
-                                  </h4>
-                                  {chat.archived && (
-                                    <span className="text-xs text-warning-600 bg-warning-100 rounded px-2 py-0.5 ml-1">
-                                      Archived
-                                    </span>
-                                  )}
-                                </div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 w-full">
+                              <div className="w-full flex items-center gap-2">
+                                <h4 className="text-sm font-medium truncate max-w-full block">
+                                  {chat.title}
+                                </h4>
+                                {chat.archived && (
+                                  <span className="text-xs text-warning-600 bg-warning-100 rounded px-2 py-0.5 ml-1">
+                                    Archived
+                                  </span>
+                                )}
                               </div>
                             </div>
-                            {/* Action Dropdown absolutely positioned, not inside Card/Button */}
-                            <div className="absolute right-2 top-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10">
-                              <Dropdown placement="bottom-end">
-                                <DropdownTrigger>
-                                  <Button
-                                    isIconOnly
-                                    aria-label="Open chat actions"
-                                    className="min-w-6 w-6 h-6 bg-content1/80 backdrop-blur-sm rounded-full flex items-center justify-center"
-                                    size="sm"
-                                    variant="light"
-                                  >
-                                    <Icon
-                                      className="text-xs"
-                                      icon="lucide:more-horizontal"
-                                    />
-                                  </Button>
-                                </DropdownTrigger>
-                                <DropdownMenu
-                                  closeOnSelect
-                                  aria-label="Chat actions"
-                                  className="bg-content1/95 rounded-lg p-1 min-w-[140px] border border-divider/20 block md:absolute md:left-0 md:top-full"
-                                  items={actions}
-                                  onAction={async (key) => {
-                                    if (key === "delete") {
-                                      deleteChat(chat.id);
-                                    } else if (key === "rename") {
-                                      handleRenameClick(chat);
-                                    } else if (key === "archive") {
-                                      archiveChat(chat.id);
-                                    }
-                                  }}
-                                >
-                                  {actions.map((action) => (
-                                    <DropdownItem
-                                      key={action.key}
-                                      className={`text-sm text-${action.color}-600 hover:bg-${action.color}-100`}
-                                      startContent={
-                                        <Icon icon={`${action.icon}`} />
-                                      }
-                                    >
-                                      {action.label}
-                                    </DropdownItem>
-                                  ))}
-                                </DropdownMenu>
-                              </Dropdown>
-                            </div>
                           </div>
+                        </button>
+                        {/* Action Dropdown positioned outside the clickable area */}
+                        <button
+                          className="absolute right-2 top-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10"
+                          type="button"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Dropdown placement="bottom-end">
+                            <DropdownTrigger>
+                              <Button
+                                isIconOnly
+                                aria-label="Open chat actions"
+                                className="min-w-6 w-6 h-6 bg-content1/80 backdrop-blur-sm rounded-full flex items-center justify-center"
+                                size="sm"
+                                variant="light"
+                              >
+                                <Icon
+                                  className="text-xs"
+                                  icon="lucide:more-horizontal"
+                                />
+                              </Button>
+                            </DropdownTrigger>
+                            <DropdownMenu
+                              closeOnSelect
+                              aria-label="Chat actions"
+                              className="bg-content1/95 rounded-lg p-1 min-w-[140px] border border-divider/20 block md:absolute md:left-0 md:top-full"
+                              items={actions}
+                              onAction={async (key) => {
+                                if (key === "delete") {
+                                  deleteChat(chat.id);
+                                } else if (key === "rename") {
+                                  handleRenameClick(chat);
+                                } else if (key === "archive") {
+                                  archiveChat(chat.id);
+                                }
+                              }}
+                            >
+                              {actions.map((action) => (
+                                <DropdownItem
+                                  key={action.key}
+                                  className={`text-sm text-${action.color}-600 hover:bg-${action.color}-100`}
+                                  startContent={
+                                    <Icon icon={`${action.icon}`} />
+                                  }
+                                >
+                                  {action.label}
+                                </DropdownItem>
+                              ))}
+                            </DropdownMenu>
+                          </Dropdown>
                         </button>
                       </div>
                     ))}
@@ -422,7 +426,15 @@ export default function ChatPage() {
       </Card>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col bg-content1/30 backdrop-blur-xl w-full relative">
+      <button
+        className="flex-1 flex flex-col bg-content1/30 backdrop-blur-xl w-full relative"
+        type="button"
+        onClick={() => {
+          if (sidebarOpen) {
+            setSidebarOpen(false);
+          }
+        }}
+      >
         {/* Fixed Header */}
         <div className="sticky top-0 z-30 bg-content1/80 backdrop-blur-xl w-full">
           {/* Enhanced Chat Header */}
@@ -578,7 +590,7 @@ export default function ChatPage() {
             />
           </CardBody>
         </Card>
-      </div>
+      </button>
     </div>
   );
 }
