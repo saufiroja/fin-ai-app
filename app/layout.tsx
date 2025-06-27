@@ -6,9 +6,9 @@ import { Providers } from "./providers";
 
 import { siteConfig } from "@/config/site";
 import { fontSans } from "@/config/fonts";
-import { Navbar } from "@/components/navbar";
+import { LayoutContent } from "@/components/layout-content";
 
-export const metadata: Metadata = {
+const metadata: Metadata = {
   title: {
     default: siteConfig.name,
     template: `%s - ${siteConfig.name}`,
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const viewport: Viewport = {
+const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "white" },
     { media: "(prefers-color-scheme: dark)", color: "black" },
@@ -41,19 +41,7 @@ export default function RootLayout({
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <div className="relative flex flex-col h-screen">
-            <Navbar />
-            <main
-              className={clsx(
-                "container mx-auto max-w-7xl flex-grow",
-                // Responsive padding and width for mobile
-                "px-2 sm:px-4 md:px-6 mt-4",
-                "w-full",
-              )}
-            >
-              {children}
-            </main>
-          </div>
+          <LayoutContent>{children}</LayoutContent>
         </Providers>
       </body>
     </html>
