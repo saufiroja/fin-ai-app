@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
@@ -7,20 +7,28 @@ import { Link } from "@heroui/link";
 import { Divider } from "@heroui/divider";
 import { Icon } from "@iconify/react";
 import { Eye, EyeOff } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
+
+import { registerUser, resetRegistrationSuccess } from "@/lib/redux/authSlice";
+import { AppDispatch, RootState } from "@/lib/redux/store";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    full_name: "",
     email: "",
     password: "",
-    confirmPassword: "",
   });
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
     useState(false);
-  const [acceptTerms, setAcceptTerms] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const dispatch: AppDispatch = useDispatch();
+  const router = useRouter();
+
+  const { loading, error, registrationSuccess } = useSelector(
+    (state: RootState) => state.auth,
+  );
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const togglePasswordVisibility = () => {
@@ -39,15 +47,19 @@ export default function RegisterPage() {
     }
   };
 
+  const handleConfirmPasswordChange = (value: string) => {
+    setConfirmPassword(value);
+    // Clear error when user starts typing
+    if (errors.confirmPassword) {
+      setErrors((prev) => ({ ...prev, confirmPassword: "" }));
+    }
+  };
+
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = "First name is required";
-    }
-
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = "Last name is required";
+    if (!formData.full_name.trim()) {
+      newErrors.full_name = "Full name is required";
     }
 
     if (!formData.email.trim()) {
@@ -62,14 +74,10 @@ export default function RegisterPage() {
       newErrors.password = "Password must be at least 8 characters";
     }
 
-    if (!formData.confirmPassword) {
+    if (!confirmPassword) {
       newErrors.confirmPassword = "Please confirm your password";
-    } else if (formData.password !== formData.confirmPassword) {
+    } else if (formData.password !== confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
-    }
-
-    if (!acceptTerms) {
-      newErrors.terms = "You must accept the terms and conditions";
     }
 
     setErrors(newErrors);
@@ -84,27 +92,21 @@ export default function RegisterPage() {
       return;
     }
 
-    setIsLoading(true);
-
-    // Simulate API call
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      console.log("Registration attempt:", formData);
-      // Add your registration logic here
-    } catch (error) {
-      console.error("Registration error:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    dispatch(registerUser(formData));
   };
 
+  useEffect(() => {
+    if (registrationSuccess) {
+      dispatch(resetRegistrationSuccess());
+      router.push("/login");
+    }
+  }, [registrationSuccess, dispatch, router]);
+
   const isFormValid =
-    formData.firstName &&
-    formData.lastName &&
+    formData.full_name &&
     formData.email &&
     formData.password &&
-    formData.confirmPassword &&
-    acceptTerms;
+    confirmPassword;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-content1 p-4">
@@ -140,48 +142,24 @@ export default function RegisterPage() {
 
           <CardBody className="pt-0">
             <form className="space-y-4" onSubmit={handleRegister}>
-              {/* Name Fields */}
-              <div className="grid grid-cols-2 gap-4">
-                <Input
-                  isRequired
-                  classNames={{
-                    inputWrapper: `border-primary/40 focus-within:border-primary ${errors.firstName ? "border-danger" : ""}`,
-                  }}
-                  errorMessage={errors.firstName}
-                  isInvalid={!!errors.firstName}
-                  label="First Name"
-                  placeholder="Enter first name"
-                  startContent={
-                    <Icon className="text-default-400" icon="lucide:user" />
-                  }
-                  type="text"
-                  value={formData.firstName}
-                  variant="bordered"
-                  onValueChange={(value) =>
-                    handleInputChange("firstName", value)
-                  }
-                />
-
-                <Input
-                  isRequired
-                  classNames={{
-                    inputWrapper: `border-primary/40 focus-within:border-primary ${errors.lastName ? "border-danger" : ""}`,
-                  }}
-                  errorMessage={errors.lastName}
-                  isInvalid={!!errors.lastName}
-                  label="Last Name"
-                  placeholder="Enter last name"
-                  startContent={
-                    <Icon className="text-default-400" icon="lucide:user" />
-                  }
-                  type="text"
-                  value={formData.lastName}
-                  variant="bordered"
-                  onValueChange={(value) =>
-                    handleInputChange("lastName", value)
-                  }
-                />
-              </div>
+              {/* Full Name Field */}
+              <Input
+                isRequired
+                classNames={{
+                  inputWrapper: `border-primary/40 focus-within:border-primary ${errors.name ? "border-danger" : ""}`,
+                }}
+                errorMessage={errors.name}
+                isInvalid={!!errors.name}
+                label="Full Name"
+                placeholder="Enter your full name"
+                startContent={
+                  <Icon className="text-default-400" icon="lucide:user" />
+                }
+                type="text"
+                value={formData.full_name}
+                variant="bordered"
+                onValueChange={(value) => handleInputChange("full_name", value)}
+              />
 
               {/* Email Input */}
               <Input
@@ -261,22 +239,20 @@ export default function RegisterPage() {
                   <Icon className="text-default-400" icon="lucide:lock" />
                 }
                 type={isConfirmPasswordVisible ? "text" : "password"}
-                value={formData.confirmPassword}
+                value={confirmPassword}
                 variant="bordered"
-                onValueChange={(value) =>
-                  handleInputChange("confirmPassword", value)
-                }
+                onValueChange={handleConfirmPasswordChange}
               />
 
               {/* Register Button */}
               <Button
                 className="w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold"
                 isDisabled={!isFormValid}
-                isLoading={isLoading}
+                isLoading={loading}
                 size="lg"
                 type="submit"
               >
-                {isLoading ? "Creating Account..." : "Create Account"}
+                {loading ? "Creating Account..." : "Create Account"}
               </Button>
             </form>
 

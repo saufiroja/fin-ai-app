@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
@@ -7,12 +7,22 @@ import { Link } from "@heroui/link";
 import { Divider } from "@heroui/divider";
 import { Icon } from "@iconify/react";
 import { Eye, EyeOff } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
+
+import { loginUser } from "@/lib/redux/authSlice";
+import { AppDispatch, RootState } from "@/lib/redux/store";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const dispatch: AppDispatch = useDispatch();
+  const router = useRouter();
+
+  const { loading, error, token } = useSelector(
+    (state: RootState) => state.auth,
+  );
 
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
@@ -20,19 +30,14 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
-    // Simulate API call
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      console.log("Login attempt:", { email, password });
-      // Add your login logic here
-    } catch (error) {
-      console.error("Login error:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    dispatch(loginUser({ email, password }));
   };
+
+  useEffect(() => {
+    if (token) {
+      router.push("/");
+    }
+  }, [token, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-content1 p-4">
@@ -128,11 +133,11 @@ export default function LoginPage() {
               <Button
                 className="w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold"
                 isDisabled={!email || !password}
-                isLoading={isLoading}
+                isLoading={loading}
                 size="lg"
                 type="submit"
               >
-                {isLoading ? "Signing In..." : "Sign In"}
+                {loading ? "Signing In..." : "Sign In"}
               </Button>
             </form>
 

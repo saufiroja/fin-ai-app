@@ -9,7 +9,18 @@ import { Switch } from "@heroui/switch";
 import { Select, SelectItem } from "@heroui/select";
 import { Textarea } from "@heroui/input";
 import { Chip } from "@heroui/chip";
-import { User, Mail, Lock, Bell, Globe, Shield, Camera } from "lucide-react";
+import {
+  User,
+  Mail,
+  Lock,
+  Bell,
+  Globe,
+  Shield,
+  Camera,
+  LogOut,
+  Trash2,
+} from "lucide-react";
+import Cookies from "js-cookie";
 
 import Loading from "./loading";
 
@@ -18,6 +29,7 @@ import { ThemeSwitch } from "@/components/theme-switch";
 export default function SettingPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [formData, setFormData] = useState({
     name: "John Doe",
     email: "john.doe@example.com",
@@ -75,6 +87,49 @@ export default function SettingPage() {
       console.error("Error saving settings:", error);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+
+    try {
+      console.log("User logged out");
+
+      // Clear access_token cookie using js-cookie
+      Cookies.remove("access_token");
+      Cookies.remove("access_token", { path: "/" });
+      Cookies.remove("access_token", {
+        path: "/",
+        domain: window.location.hostname,
+      });
+
+      // Redirect to login page
+      window.location.href = "/login";
+
+      console.log("User logged out successfully");
+    } catch (error) {
+      console.error("Error during logout:", error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete your account? This action cannot be undone.",
+    );
+
+    if (!confirmed) return;
+
+    try {
+      // Simulate delete account API call
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      console.log("Account deleted");
+      window.location.href = "/register";
+    } catch (error) {
+      console.error("Error deleting account:", error);
     }
   };
 
@@ -141,6 +196,15 @@ export default function SettingPage() {
                   onPress={() => setActiveTab("preferences")}
                 >
                   Preferences
+                </Button>
+                <Button
+                  className="justify-start"
+                  color="primary"
+                  startContent={<LogOut size={18} />}
+                  variant={activeTab === "account" ? "solid" : "light"}
+                  onPress={() => setActiveTab("account")}
+                >
+                  Account
                 </Button>
               </div>
             </CardBody>
@@ -414,6 +478,84 @@ export default function SettingPage() {
                           </p>
                         </div>
                         <ThemeSwitch />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "account" && (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">
+                        Account Management
+                      </h3>
+
+                      {/* Logout Section */}
+                      <div className="space-y-4">
+                        <div className="p-4 bg-default-50 rounded-lg border border-default-200">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-medium">Sign Out</h4>
+                              <p className="text-sm text-default-500">
+                                Sign out from your account on this device
+                              </p>
+                            </div>
+                            <Button
+                              color="primary"
+                              isLoading={isLoggingOut}
+                              startContent={<LogOut size={18} />}
+                              variant="flat"
+                              onPress={handleLogout}
+                            >
+                              {isLoggingOut ? "Signing Out..." : "Sign Out"}
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Account Data Export */}
+                        <div className="p-4 bg-default-50 rounded-lg border border-default-200">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-medium">Export Data</h4>
+                              <p className="text-sm text-default-500">
+                                Download a copy of your account data
+                              </p>
+                            </div>
+                            <Button color="default" variant="flat">
+                              Export
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Divider />
+
+                    {/* Danger Zone */}
+                    <div>
+                      <h4 className="font-medium text-danger mb-3">
+                        Danger Zone
+                      </h4>
+                      <div className="p-4 bg-danger-50 rounded-lg border border-danger-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium text-danger">
+                              Delete Account
+                            </h4>
+                            <p className="text-sm text-danger-600">
+                              Permanently delete your account and all data. This
+                              action cannot be undone.
+                            </p>
+                          </div>
+                          <Button
+                            color="danger"
+                            startContent={<Trash2 size={18} />}
+                            variant="flat"
+                            onPress={handleDeleteAccount}
+                          >
+                            Delete Account
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
