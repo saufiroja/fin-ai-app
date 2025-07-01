@@ -1,12 +1,40 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import Cookies from "js-cookie";
 
+import { AuthState } from "@/types";
+
 const API_BASE_URL = "http://localhost:8000/api/v1";
+
+// Mock user data
+const MOCK_USERS = [
+  {
+    id: 1,
+    name: "Andi Pratama",
+    email: "andi@example.com",
+    password: "password123",
+    avatar: "A",
+  },
+  {
+    id: 2,
+    name: "Budi Santoso",
+    email: "budi@example.com",
+    password: "password123",
+    avatar: "B",
+  },
+  {
+    id: 3,
+    name: "Citra Dewi",
+    email: "citra@example.com",
+    password: "password123",
+    avatar: "C",
+  },
+];
 
 export const loginUser = createAsyncThunk(
   "auth/login",
   async (credentials: any, { rejectWithValue }) => {
     try {
+      // Try to connect to real API first
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: {
@@ -23,7 +51,44 @@ export const loginUser = createAsyncThunk(
 
       return data;
     } catch (error: any) {
-      return rejectWithValue(error.message);
+      // If API is not available, use mock authentication
+      console.log("API not available, using mock authentication");
+
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Find mock user
+      const mockUser = MOCK_USERS.find(
+        (user) =>
+          user.email === credentials.email &&
+          user.password === credentials.password,
+      );
+
+      if (!mockUser) {
+        return rejectWithValue({
+          message: "Invalid email or password",
+          status: 401,
+        });
+      }
+
+      // Generate mock token
+      const mockToken = `mock_token_${mockUser.id}_${Date.now()}`;
+
+      Cookies.set("access_token", mockToken);
+
+      // Return mock response in the same format as real API
+      return {
+        message: "Login successful",
+        data: {
+          access_token: mockToken,
+        },
+        user: {
+          id: mockUser.id,
+          name: mockUser.name,
+          email: mockUser.email,
+          avatar: mockUser.avatar,
+        },
+      };
     }
   },
 );
@@ -60,7 +125,7 @@ const authSlice = createSlice({
     loading: false,
     error: null as string | null,
     registrationSuccess: false,
-  },
+  } as AuthState,
   reducers: {
     logout: (state) => {
       state.user = null;

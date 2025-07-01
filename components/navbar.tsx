@@ -14,11 +14,26 @@ import NextLink from "next/link";
 import clsx from "clsx";
 import { Avatar } from "@heroui/avatar";
 import React from "react";
+import { useSelector } from "react-redux";
 
 import { siteConfig } from "@/config/site";
+import { RootState } from "@/lib/redux/store";
 
 export const Navbar = () => {
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const { user } = useSelector((state: RootState) => state.auth);
+
+  // Get first letter of user's name or default to "U"
+  const getAvatarInitial = () => {
+    if (user?.name) {
+      return user.name.charAt(0).toUpperCase();
+    }
+    if (user?.avatar) {
+      return user.avatar.toUpperCase();
+    }
+
+    return "U";
+  };
 
   return (
     <HeroUINavbar
@@ -63,9 +78,9 @@ export const Navbar = () => {
           <NextLink href="/setting">
             <Avatar
               isBordered
-              showFallback
-              className="cursor-pointer text-white bg-primary"
-              name="A"
+              className="text-white font-semibold"
+              color="primary"
+              name={getAvatarInitial()}
               size="sm"
             />
           </NextLink>
