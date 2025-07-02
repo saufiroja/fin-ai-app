@@ -8,18 +8,19 @@ import { siteConfig } from "@/config/site";
 import { fontSans } from "@/config/fonts";
 import { LayoutContent } from "@/components/layout-content";
 
-const metadata: Metadata = {
+export const metadata: Metadata = {
   title: {
     default: siteConfig.name,
     template: `%s - ${siteConfig.name}`,
   },
   description: siteConfig.description,
+  manifest: "/manifest.json",
   icons: {
     icon: "/favicon.ico",
   },
 };
 
-const viewport: Viewport = {
+export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "white" },
     { media: "(prefers-color-scheme: dark)", color: "black" },
