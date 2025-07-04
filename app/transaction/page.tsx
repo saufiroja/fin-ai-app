@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableHeader,
@@ -31,49 +31,113 @@ import { getLocalTimeZone } from "@internationalized/date";
 import { Popover, PopoverTrigger, PopoverContent } from "@heroui/popover";
 import { Pagination } from "@heroui/pagination";
 import NextLink from "next/link";
+import { useSelector, useDispatch } from "react-redux";
 
 import Loading from "./loading";
 
 import StatisticsCard from "@/components/StatisticsCard";
 import { categories } from "@/dummy/categories";
-import { dummyResponseHistory, dummyResponseHistory2 } from "@/dummy/history";
-
-// Mock data to simulate your existing data structure
-const dummyCategories = [
-  { name: "All Categories", icon: "📂" },
-  { name: "Food", icon: "🍔" },
-  { name: "Salary", icon: "💰" },
-  { name: "Transportation", icon: "🚗" },
-  { name: "Utilities", icon: "💡" },
-  { name: "Shopping", icon: "🛍️" },
-  { name: "Entertainment", icon: "🎬" },
-];
-
-interface Transaction {
-  id: number;
-  type: string;
-  desc: string;
-  category: string;
-  amount: number;
-  date: string;
-}
-
-const allTransactions = [
-  ...dummyResponseHistory.data,
-  ...dummyResponseHistory2.data,
-];
+import { RootState, AppDispatch } from "@/lib/redux/store";
+import {
+  fetchTransactions,
+  fetchOverview,
+  deleteTransaction,
+} from "@/lib/redux/transactionSlice";
+import { fetchCategories } from "@/lib/redux/categorySlice";
 
 export default function TransactionPage() {
+  const dispatch: AppDispatch = useDispatch();
+  const { token } = useSelector((state: RootState) => state.auth);
+  const {
+    transactions,
+    pagination,
+    overview,
+    loading,
+    overviewLoading,
+    error,
+    overviewError,
+  } = useSelector((state: RootState) => state.transactions);
+  const { categories: apiCategories, loading: categoriesLoading } = useSelector(
+    (state: RootState) => state.categories,
+  );
+
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [viewMode, setViewMode] = useState<"table" | "card">("table");
   const [isMobile, setIsMobile] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState<{ start: any; end: any } | null>(
     null,
   );
   const [page, setPage] = useState(1);
+
   const pageSize = viewMode === "card" || isMobile ? 12 : 10;
+
+  // Function to fetch transactions using Redux
+  const fetchTransactionsData = () => {
+    if (!token) return;
+
+    // Format date range for API with proper time formatting
+    let startDate = "";
+    let endDate = "";
+
+    if (dateRange && dateRange.start && dateRange.end) {
+      startDate = formatDateForAPI(dateRange.start, false); // 00:00:00
+      endDate = formatDateForAPI(dateRange.end, true); // 23:59:59
+      
+      // Debug log to verify format
+      console.log("Date range for API:", { startDate, endDate });
+    }
+
+    // Dispatch fetchTransactions with parameters
+    dispatch(
+      fetchTransactions({
+        token,
+        params: {
+          limit: pageSize,
+          offset: page,
+          category: category || undefined, // This should be category_id
+          search: search || undefined,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
+        },
+      }),
+    );
+  };
+
+  // Function to fetch overview data
+  const fetchOverviewData = () => {
+    if (!token) return;
+    dispatch(fetchOverview(token));
+  };
+
+  // Function to fetch categories
+  const fetchCategoriesData = () => {
+    if (!token) return;
+    dispatch(
+      fetchCategories({
+        token,
+        params: {
+          limit: 100, // Get all categories
+          offset: 1,
+          search: "",
+        },
+      }),
+    );
+  };
+
+  // Function to handle delete transaction
+  const handleDeleteTransaction = async (transactionId: string) => {
+    if (!token) return;
+
+    try {
+      await dispatch(deleteTransaction({ token, id: transactionId })).unwrap();
+      // Refresh both transactions and overview data after deletion
+      fetchTransactionsData();
+      fetchOverviewData();
+    } catch (error) {
+      console.error("Failed to delete transaction:", error);
+    }
+  };
 
   useEffect(() => {
     const checkMobile = () => {
@@ -90,48 +154,33 @@ export default function TransactionPage() {
     if (isMobile) setViewMode("card");
   }, [isMobile]);
 
-  // Simulate data loading
+  // Fetch transactions when filters change
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setIsLoading(false);
-    };
+    fetchTransactionsData();
+  }, [token, search, category, dateRange, page, pageSize]);
 
-    loadData();
-  }, []);
+  // Fetch overview data when token is available
+  useEffect(() => {
+    fetchOverviewData();
+    fetchCategoriesData();
+  }, [token]);
 
-  const filteredTransactions = useMemo(() => {
-    let txs = allTransactions;
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [search, category, dateRange, viewMode]);
 
-    if (dateRange && dateRange.start && dateRange.end) {
-      const start = dateRange.start.toDate(getLocalTimeZone());
-      const end = dateRange.end.toDate(getLocalTimeZone());
+  // Helper function to parse currency string to number for balance calculation
+  const parseCurrency = (currencyStr: string): number => {
+    if (!currencyStr) return 0;
 
-      txs = txs.filter((t: Transaction) => {
-        const d = new Date(t.date);
+    // Remove "Rp " and any spaces, then parse as number
+    return parseInt(currencyStr.replace(/[^\d]/g, "")) || 0;
+  };
 
-        return d >= start && d <= end;
-      });
-    } // else do not filter by date, show all
-    if (category) txs = txs.filter((t: Transaction) => t.category === category);
-    if (search)
-      txs = txs.filter((t: Transaction) =>
-        t.desc.toLowerCase().includes(search.toLowerCase()),
-      );
-
-    return txs;
-  }, [search, category, dateRange]);
-
-  const totalIncome = filteredTransactions
-    .filter((t) => t.type === "Pemasukan")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const totalExpense = filteredTransactions
-    .filter((t) => t.type === "Pengeluaran")
-    .reduce((sum, t) => sum + t.amount, 0);
-
+  // Calculate balance from API data
+  const totalIncome = overview ? parseCurrency(overview.total_income) : 0;
+  const totalExpense = overview ? parseCurrency(overview.total_expense) : 0;
   const balance = totalIncome - totalExpense;
 
   const formatCurrency = (amount: number) => {
@@ -150,24 +199,51 @@ export default function TransactionPage() {
     });
   };
 
+  // Helper function to format date for API
+  const formatDateForAPI = (date: any, isEndDate: boolean = false) => {
+    const dateObj = date.toDate(getLocalTimeZone());
+    const dateString = dateObj.toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    if (isEndDate) {
+      return `${dateString} 23:59:59`;
+    } else {
+      return `${dateString} 00:00:00`;
+    }
+  };
+
   const getCategoryIcon = (categoryName: string) => {
     const cat = categories.find((c) => c.name === categoryName);
 
     return cat?.icon || "📄";
   };
 
-  const paginatedTransactions = useMemo(() => {
-    const startIdx = (page - 1) * pageSize;
+  // Helper function to get transaction type display
+  const getTypeDisplay = (type: string) => {
+    return type === "income" ? "Pemasukan" : "Pengeluaran";
+  };
 
-    return filteredTransactions.slice(startIdx, startIdx + pageSize);
-  }, [filteredTransactions, page, pageSize]);
+  // Helper function to get category display from category_id
+  const getCategoryDisplay = (categoryId: string) => {
+    const category = apiCategories.find(
+      (cat) => cat.category_id === categoryId,
+    );
 
-  const paginatedCardTransactions = paginatedTransactions; // always use the same slice
+    return category?.name || categoryId;
+  };
 
-  const totalPages = Math.ceil(filteredTransactions.length / pageSize);
+  // Create category options for select, including API categories
+  const categoryOptions = [
+    { category_id: "", name: "All Categories", icon: "📂" },
+    ...apiCategories.map((cat) => ({
+      ...cat,
+      icon: getCategoryIcon(cat.name),
+    })),
+  ];
+
+  const totalPages = pagination.total_pages || 1;
 
   // Show loading skeleton while data is being fetched
-  if (isLoading) {
+  if (loading) {
     return <Loading />;
   }
 
@@ -181,6 +257,16 @@ export default function TransactionPage() {
               <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
                 Transaction Management
               </h1>
+              {error && (
+                <p className="text-sm text-orange-600 dark:text-orange-400">
+                  ⚠️ Using mock data (API: {error})
+                </p>
+              )}
+              {overviewError && (
+                <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                  ⚠️ Using mock overview data (API: {overviewError})
+                </p>
+              )}
             </div>
             <div className="flex gap-3">
               <Button className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105">
@@ -202,14 +288,14 @@ export default function TransactionPage() {
               icon={<TrendingDown className="w-6 h-6 text-red-600" />}
               iconBg="bg-red-100 dark:bg-red-900"
               label="Total Pengeluaran"
-              value={formatCurrency(totalExpense)}
+              value={overview?.total_expense || "Rp 0"}
               valueColor="text-red-500"
             />
             <StatisticsCard
               icon={<TrendingUp className="w-6 h-6 text-green-600" />}
               iconBg="bg-green-100 dark:bg-green-900"
               label="Total Pemasukan"
-              value={formatCurrency(totalIncome)}
+              value={overview?.total_income || "Rp 0"}
               valueColor="text-green-500"
             />
             <StatisticsCard
@@ -273,11 +359,11 @@ export default function TransactionPage() {
                   onSelectionChange={(keys) => {
                     const val = Array.from(keys)[0] as string;
 
-                    setCategory(val === "All Categories" ? "" : val || "");
+                    setCategory(val === "" ? "" : val || "");
                   }}
                 >
-                  {dummyCategories.map((cat) => (
-                    <SelectItem key={cat.name} textValue={cat.name}>
+                  {categoryOptions.map((cat) => (
+                    <SelectItem key={cat.category_id} textValue={cat.name}>
                       {cat.icon} {cat.name}
                     </SelectItem>
                   ))}
@@ -351,65 +437,76 @@ export default function TransactionPage() {
                     <TableColumn>Actions</TableColumn>
                   </TableHeader>
                   <TableBody emptyContent={"No transactions found."}>
-                    {paginatedTransactions.map((tx) => (
-                      <TableRow key={tx.id}>
+                    {transactions.map((tx) => (
+                      <TableRow key={tx.transaction_id}>
                         <TableCell className="text-foreground">
-                          {formatDate(tx.date)}
+                          {formatDate(tx.transaction_date)}
                         </TableCell>
                         <TableCell className="text-foreground">
-                          {tx.desc}
+                          {tx.description}
                         </TableCell>
                         <TableCell>
                           <Chip
                             color="primary"
                             startContent={
-                              <span>{getCategoryIcon(tx.category)}</span>
+                              <span>
+                                {getCategoryIcon(
+                                  getCategoryDisplay(tx.category_id),
+                                )}
+                              </span>
                             }
                             variant="flat"
                           >
-                            {tx.category}
+                            {getCategoryDisplay(tx.category_id)}
                           </Chip>
                         </TableCell>
                         <TableCell>
                           <span
                             className={
-                              tx.type === "Pemasukan"
+                              tx.type === "income"
                                 ? "text-green-600 dark:text-green-400 font-semibold"
                                 : "text-red-500 dark:text-red-400 font-semibold"
                             }
                           >
-                            {tx.type === "Pemasukan" ? "+" : "-"}
+                            {tx.type === "income" ? "+" : "-"}
                             {formatCurrency(tx.amount)}
                           </span>
                         </TableCell>
                         <TableCell>
                           <Chip
-                            color={
-                              tx.type === "Pemasukan" ? "success" : "danger"
-                            }
+                            color={tx.type === "income" ? "success" : "danger"}
                             variant="flat"
                           >
-                            {tx.type}
+                            {getTypeDisplay(tx.type)}
                           </Chip>
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
                             <Tooltip content="View">
-                              <NextLink href={`/transaction/view/${tx.id}`}>
+                              <NextLink
+                                href={`/transaction/view/${tx.transaction_id}`}
+                              >
                                 <button className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg transition-colors duration-150">
                                   <Eye className="w-4 h-4" />
                                 </button>
                               </NextLink>
                             </Tooltip>
                             <Tooltip content="Edit">
-                              <NextLink href={`/transaction/update/${tx.id}`}>
+                              <NextLink
+                                href={`/transaction/update/${tx.transaction_id}`}
+                              >
                                 <button className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg transition-colors duration-150">
                                   <Edit3 className="w-4 h-4" />
                                 </button>
                               </NextLink>
                             </Tooltip>
                             <Tooltip content="Delete">
-                              <button className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors duration-150">
+                              <button
+                                className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors duration-150"
+                                onClick={() =>
+                                  handleDeleteTransaction(tx.transaction_id)
+                                }
+                              >
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </Tooltip>
@@ -425,61 +522,78 @@ export default function TransactionPage() {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {paginatedCardTransactions.map((tx) => (
+              {transactions.map((tx) => (
                 <Card
-                  key={tx.id}
+                  key={tx.transaction_id}
                   className="hover:shadow-xl transition-all duration-300 hover:scale-105"
                 >
                   <CardHeader className="flex items-start justify-between mb-2 pb-0">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center text-lg">
-                        {getCategoryIcon(tx.category)}
+                        {getCategoryIcon(getCategoryDisplay(tx.category_id))}
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-                          {tx.desc}
+                          {tx.description}
                         </h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {formatDate(tx.date)}
+                          {formatDate(tx.transaction_date)}
                         </p>
                       </div>
                     </div>
                     <Chip
-                      color={tx.type === "Pemasukan" ? "success" : "danger"}
+                      color={tx.type === "income" ? "success" : "danger"}
                       variant="flat"
                     >
-                      {tx.type}
+                      {getTypeDisplay(tx.type)}
                     </Chip>
                   </CardHeader>
                   <CardBody className="mb-2">
                     <Chip
                       color="primary"
-                      startContent={<span>{getCategoryIcon(tx.category)}</span>}
+                      startContent={
+                        <span>
+                          {getCategoryIcon(getCategoryDisplay(tx.category_id))}
+                        </span>
+                      }
                       variant="flat"
                     >
-                      {tx.category}
+                      {getCategoryDisplay(tx.category_id)}
                     </Chip>
                   </CardBody>
                   <CardFooter className="flex items-center justify-between pt-0">
                     <span
-                      className={`text-xl font-bold ${tx.type === "Pemasukan" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+                      className={`text-xl font-bold ${tx.type === "income" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
                     >
-                      {tx.type === "Pemasukan" ? "+" : "-"}
+                      {tx.type === "income" ? "+" : "-"}
                       {formatCurrency(tx.amount)}
                     </span>
                     <div className="flex gap-1">
                       <Tooltip content="View">
-                        <button className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg transition-colors duration-150">
-                          <Eye className="w-4 h-4" />
-                        </button>
+                        <NextLink
+                          href={`/transaction/view/${tx.transaction_id}`}
+                        >
+                          <button className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg transition-colors duration-150">
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        </NextLink>
                       </Tooltip>
                       <Tooltip content="Edit">
-                        <button className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg transition-colors duration-150">
-                          <Edit3 className="w-4 h-4" />
-                        </button>
+                        <NextLink
+                          href={`/transaction/update/${tx.transaction_id}`}
+                        >
+                          <button className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg transition-colors duration-150">
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                        </NextLink>
                       </Tooltip>
                       <Tooltip content="Delete">
-                        <button className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors duration-150">
+                        <button
+                          className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors duration-150"
+                          onClick={() =>
+                            handleDeleteTransaction(tx.transaction_id)
+                          }
+                        >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </Tooltip>
