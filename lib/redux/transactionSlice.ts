@@ -312,27 +312,25 @@ export const fetchOverview = createAsyncThunk(
 
 export const createTransaction = createAsyncThunk(
   "transactions/createTransaction",
-  async (
-    {
-      token,
-      transaction,
-    }: {
-      token: string;
-      transaction: {
-        category_id: string;
-        type: "expense" | "income";
-        description: string;
-        amount: number;
-        source: string;
-        transaction_date: string;
-        ai_category_confidence: number;
-        is_auto_categorized: boolean;
-        confirmed: boolean;
-        discount: number;
-        payment_method: string;
-      };
-    },
-  ) => {
+  async ({
+    token,
+    transaction,
+  }: {
+    token: string;
+    transaction: {
+      category_id: string;
+      type: "expense" | "income";
+      description: string;
+      amount: number;
+      source: string;
+      transaction_date: string;
+      ai_category_confidence: number;
+      is_auto_categorized: boolean;
+      confirmed: boolean;
+      discount: number;
+      payment_method: string;
+    };
+  }) => {
     try {
       const response = await fetch(`${API_BASE_URL}/transactions`, {
         method: "POST",
@@ -445,10 +443,7 @@ export const deleteTransaction = createAsyncThunk(
 
 export const fetchTransactionById = createAsyncThunk(
   "transactions/fetchTransactionById",
-  async (
-    { token, id }: { token: string; id: string },
-    { rejectWithValue }
-  ) => {
+  async ({ token, id }: { token: string; id: string }, { rejectWithValue }) => {
     try {
       const response = await fetch(`${API_BASE_URL}/transactions/${id}`, {
         method: "GET",
@@ -466,11 +461,16 @@ export const fetchTransactionById = createAsyncThunk(
 
       return data.data;
     } catch (error: any) {
-      console.log("API not available, using mock transaction data", error.message);
+      console.log(
+        "API not available, using mock transaction data",
+        error.message,
+      );
 
       // Find transaction in mock data
-      const mockTransaction = MOCK_TRANSACTIONS.find(t => t.transaction_id === id);
-      
+      const mockTransaction = MOCK_TRANSACTIONS.find(
+        (t) => t.transaction_id === id,
+      );
+
       if (mockTransaction) {
         return mockTransaction;
       } else {

@@ -9,19 +9,12 @@ import Loading from "./loading";
 
 import StatisticsCard from "@/components/StatisticsCard";
 import { RootState, AppDispatch } from "@/lib/redux/store";
-import { 
-  fetchTransactions, 
-  fetchOverview,
-  clearTransactionError,
-  clearOverviewError,
-  type Transaction 
-} from "@/lib/redux/transactionSlice";
-import { fetchCategories } from "@/lib/redux/categorySlice";
+import { fetchTransactions, fetchOverview } from "@/lib/redux/transactionSlice";
 
 export default function DashboardPage() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  
+
   // Redux state
   const { token } = useSelector((state: RootState) => state.auth);
   const {
@@ -39,11 +32,12 @@ export default function DashboardPage() {
   const getLastWeekDateRange = () => {
     const now = new Date();
     const oneWeekAgo = new Date(now);
+
     oneWeekAgo.setDate(now.getDate() - 7);
 
     // Format dates for API (YYYY-MM-DD format)
-    const startDate = `${oneWeekAgo.getFullYear()}-${String(oneWeekAgo.getMonth() + 1).padStart(2, '0')}-${String(oneWeekAgo.getDate()).padStart(2, '0')}`;
-    const endDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const startDate = `${oneWeekAgo.getFullYear()}-${String(oneWeekAgo.getMonth() + 1).padStart(2, "0")}-${String(oneWeekAgo.getDate()).padStart(2, "0")}`;
+    const endDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
     return { startDate, endDate };
   };
@@ -56,6 +50,7 @@ export default function DashboardPage() {
         setIsInitialLoading(true);
 
         const { startDate, endDate } = getLastWeekDateRange();
+
         console.log("Fetching data for:", { startDate, endDate });
 
         // Fetch overview data for last week
@@ -66,7 +61,7 @@ export default function DashboardPage() {
               startDate,
               endDate,
             },
-          })
+          }),
         );
 
         // Fetch recent transactions for last week (limit to 10 most recent)
@@ -79,9 +74,8 @@ export default function DashboardPage() {
               startDate,
               endDate,
             },
-          })
+          }),
         );
-
       } catch (error) {
         console.error("Error loading dashboard data:", error);
       } finally {
@@ -95,6 +89,7 @@ export default function DashboardPage() {
   // Helper function to parse currency string to number for balance calculation
   const parseCurrency = (currencyStr: string): number => {
     if (!currencyStr) return 0;
+
     // Remove "Rp " and any spaces, then parse as number
     return parseInt(currencyStr.replace(/[^\d]/g, "")) || 0;
   };
@@ -123,7 +118,7 @@ export default function DashboardPage() {
     if (diffDays === 1) return "Kemarin";
     if (diffDays > 1) return `${diffDays} hari yang lalu`;
 
-    return itemDate.toLocaleDateString('id-ID');
+    return itemDate.toLocaleDateString("id-ID");
   };
 
   // Show loading skeleton while initial data is being fetched
@@ -173,7 +168,9 @@ export default function DashboardPage() {
       {/* Recent Transactions */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Recent Transactions (7 hari terakhir)</h2>
+          <h2 className="text-xl font-semibold">
+            Recent Transactions (7 hari terakhir)
+          </h2>
           <button
             className="text-sm text-blue-600 hover:underline font-medium px-2 py-1 rounded transition-colors"
             onClick={() => router.push("/transaction")}

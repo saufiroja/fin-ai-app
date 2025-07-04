@@ -28,11 +28,11 @@ import Loading from "../../loading";
 
 import { categories } from "@/dummy/categories";
 import { RootState, AppDispatch } from "@/lib/redux/store";
-import { 
-  updateTransaction, 
-  fetchTransactionById, 
+import {
+  updateTransaction,
+  fetchTransactionById,
   clearCurrentTransaction,
-  clearCurrentTransactionError 
+  clearCurrentTransactionError,
 } from "@/lib/redux/transactionSlice";
 import { fetchCategories } from "@/lib/redux/categorySlice";
 
@@ -57,13 +57,15 @@ export default function TransactionUpdatePage() {
   console.log("Extracted Transaction ID:", transactionId);
 
   const { token } = useSelector((state: RootState) => state.auth);
-  const { 
-    currentTransaction, 
-    currentTransactionLoading, 
-    currentTransactionError, 
-    loading 
+  const {
+    currentTransaction,
+    currentTransactionLoading,
+    currentTransactionError,
+    loading,
   } = useSelector((state: RootState) => state.transactions);
-  const { categories: apiCategories } = useSelector((state: RootState) => state.categories);
+  const { categories: apiCategories } = useSelector(
+    (state: RootState) => state.categories,
+  );
 
   const [isLoading, setIsLoading] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(true);
@@ -81,13 +83,17 @@ export default function TransactionUpdatePage() {
 
   // Helper function to get category display name
   const getCategoryDisplay = (categoryId: string) => {
-    const category = apiCategories.find(cat => cat.category_id === categoryId);
+    const category = apiCategories.find(
+      (cat) => cat.category_id === categoryId,
+    );
+
     return category?.name || categoryId;
   };
 
   // Helper function to get category icon
   const getCategoryIcon = (categoryName: string) => {
     const cat = categories.find((c) => c.name === categoryName);
+
     return cat?.icon || "📄";
   };
 
@@ -104,36 +110,40 @@ export default function TransactionUpdatePage() {
     console.log("Transaction ID:", transactionId);
     console.log("Current Transaction:", currentTransaction);
     console.log("API Categories length:", apiCategories.length);
-    
+
     // Fetch categories if not loaded
     if (token && apiCategories.length === 0) {
       console.log("Fetching categories...");
-      dispatch(fetchCategories({
-        token,
-        params: {
-          limit: 100,
-          offset: 1,
-          search: "",
-        },
-      }));
+      dispatch(
+        fetchCategories({
+          token,
+          params: {
+            limit: 100,
+            offset: 1,
+            search: "",
+          },
+        }),
+      );
     }
-    
+
     const loadTransaction = async () => {
       try {
         setIsDataLoading(true);
-        
+
         // Clear any previous transaction data and errors
         dispatch(clearCurrentTransaction());
         dispatch(clearCurrentTransactionError());
-        
+
         if (!token) {
           setError("No authentication token");
+
           return;
         }
-        
+
         // Fetch transaction details from API
-        await dispatch(fetchTransactionById({ token, id: transactionId })).unwrap();
-        
+        await dispatch(
+          fetchTransactionById({ token, id: transactionId }),
+        ).unwrap();
       } catch (err) {
         setError(`Failed to load transaction: ${err}`);
       } finally {
@@ -143,14 +153,17 @@ export default function TransactionUpdatePage() {
 
     // Update form data when currentTransaction is available
     if (currentTransaction) {
-      console.log("Setting form data from currentTransaction:", currentTransaction);
+      console.log(
+        "Setting form data from currentTransaction:",
+        currentTransaction,
+      );
       setFormData({
         transaction_id: currentTransaction.transaction_id,
         type: currentTransaction.type,
         amount: currentTransaction.amount.toString(),
         category_id: currentTransaction.category_id,
         description: currentTransaction.description,
-        date: parseDate(currentTransaction.transaction_date.split('T')[0]), // Extract date part
+        date: parseDate(currentTransaction.transaction_date.split("T")[0]), // Extract date part
         payment_method: currentTransaction.payment_method || "cash",
         source: currentTransaction.source || "",
       });
@@ -163,17 +176,30 @@ export default function TransactionUpdatePage() {
       setIsDataLoading(false);
     }
 
-    if (transactionId && token && !currentTransaction && !currentTransactionLoading) {
+    if (
+      transactionId &&
+      token &&
+      !currentTransaction &&
+      !currentTransactionLoading
+    ) {
       loadTransaction();
     }
-  }, [transactionId, currentTransaction, currentTransactionError, currentTransactionLoading, token, apiCategories.length, dispatch]);
+  }, [
+    transactionId,
+    currentTransaction,
+    currentTransactionError,
+    currentTransactionLoading,
+    token,
+    apiCategories.length,
+    dispatch,
+  ]);
 
   // Separate effect to monitor categories loading
   useEffect(() => {
     console.log("Categories state changed:", {
       categories: apiCategories,
       count: apiCategories.length,
-      token: !!token
+      token: !!token,
     });
   }, [apiCategories, token]);
 
@@ -198,11 +224,13 @@ export default function TransactionUpdatePage() {
         source: formData.source,
       };
 
-      await dispatch(updateTransaction({
-        token,
-        id: transactionId,
-        transaction: updateData,
-      })).unwrap();
+      await dispatch(
+        updateTransaction({
+          token,
+          id: transactionId,
+          transaction: updateData,
+        }),
+      ).unwrap();
 
       // Navigate back to transaction list
       router.push("/transaction");
@@ -219,13 +247,19 @@ export default function TransactionUpdatePage() {
         ...prev,
         [field]: value,
       };
-      
+
       // If transaction type changes, reset category_id to ensure it's valid for the new type
       if (field === "type" && value !== prev.type) {
-        console.log("Transaction type changed from", prev.type, "to", value, "- resetting category");
+        console.log(
+          "Transaction type changed from",
+          prev.type,
+          "to",
+          value,
+          "- resetting category",
+        );
         newData.category_id = "";
       }
-      
+
       return newData;
     });
   };
@@ -238,12 +272,21 @@ export default function TransactionUpdatePage() {
   // Effect to validate selected category when categories or type changes
   useEffect(() => {
     if (formData.category_id && apiCategories.length > 0) {
-      const isValidCategory = filteredCategories.some(cat => cat.category_id === formData.category_id);
+      const isValidCategory = filteredCategories.some(
+        (cat) => cat.category_id === formData.category_id,
+      );
+
       if (!isValidCategory) {
-        console.log("Current category_id", formData.category_id, "is not valid for type", formData.type, "- clearing selection");
-        setFormData(prev => ({
+        console.log(
+          "Current category_id",
+          formData.category_id,
+          "is not valid for type",
+          formData.type,
+          "- clearing selection",
+        );
+        setFormData((prev) => ({
           ...prev,
-          category_id: ""
+          category_id: "",
         }));
       }
     }
@@ -416,19 +459,22 @@ export default function TransactionUpdatePage() {
               <div>
                 <Select
                   isRequired
+                  isDisabled={filteredCategories.length === 0}
                   label="Category"
                   placeholder={
-                    filteredCategories.length > 0 
-                      ? `Select ${formData.type} category` 
-                      : apiCategories.length > 0 
+                    filteredCategories.length > 0
+                      ? `Select ${formData.type} category`
+                      : apiCategories.length > 0
                         ? `No ${formData.type} categories available`
                         : "Loading categories..."
                   }
-                  selectedKeys={formData.category_id ? [formData.category_id] : []}
+                  selectedKeys={
+                    formData.category_id ? [formData.category_id] : []
+                  }
                   variant="bordered"
-                  isDisabled={filteredCategories.length === 0}
                   onSelectionChange={(keys) => {
                     const selected = Array.from(keys)[0] as string;
+
                     console.log("Category selected:", selected);
                     handleInputChange("category_id", selected);
                   }}
@@ -438,7 +484,9 @@ export default function TransactionUpdatePage() {
                       <SelectItem
                         key={category.category_id}
                         startContent={
-                          <span className="text-lg">{getCategoryIcon(category.name)}</span>
+                          <span className="text-lg">
+                            {getCategoryIcon(category.name)}
+                          </span>
                         }
                       >
                         {category.name}
@@ -452,24 +500,33 @@ export default function TransactionUpdatePage() {
                 </Select>
                 {/* Debug info */}
                 <div className="text-xs text-gray-500 mt-1">
-                  <p>Debug: {filteredCategories.length} {formData.type} categories loaded (total: {apiCategories.length}), current: {formData.category_id}</p>
-                  {filteredCategories.length === 0 && apiCategories.length > 0 && (
-                    <p className="text-orange-500">No {formData.type} categories found!</p>
-                  )}
+                  <p>
+                    Debug: {filteredCategories.length} {formData.type}{" "}
+                    categories loaded (total: {apiCategories.length}), current:{" "}
+                    {formData.category_id}
+                  </p>
+                  {filteredCategories.length === 0 &&
+                    apiCategories.length > 0 && (
+                      <p className="text-orange-500">
+                        No {formData.type} categories found!
+                      </p>
+                    )}
                   {filteredCategories.length === 0 && token && (
                     <Button
                       size="sm"
                       variant="light"
                       onPress={() => {
                         console.log("Manually fetching categories...");
-                        dispatch(fetchCategories({
-                          token,
-                          params: {
-                            limit: 100,
-                            offset: 1,
-                            search: "",
-                          },
-                        }));
+                        dispatch(
+                          fetchCategories({
+                            token,
+                            params: {
+                              limit: 100,
+                              offset: 1,
+                              search: "",
+                            },
+                          }),
+                        );
                       }}
                     >
                       Reload Categories
@@ -514,6 +571,7 @@ export default function TransactionUpdatePage() {
                   variant="bordered"
                   onSelectionChange={(keys) => {
                     const selected = Array.from(keys)[0] as string;
+
                     handleInputChange("payment_method", selected);
                   }}
                 >
@@ -537,9 +595,7 @@ export default function TransactionUpdatePage() {
                   placeholder="Transaction source (manual, auto, etc.)"
                   value={formData.source}
                   variant="bordered"
-                  onValueChange={(value) =>
-                    handleInputChange("source", value)
-                  }
+                  onValueChange={(value) => handleInputChange("source", value)}
                 />
               </div>
 
