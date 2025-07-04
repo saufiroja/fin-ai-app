@@ -17,35 +17,46 @@ import {
   Calendar,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSelector, useDispatch } from "react-redux";
 
 import Loading from "./loading";
 
-import { categories } from "@/dummy/categories";
+import { RootState, AppDispatch } from "@/lib/redux/store";
+import { createTransaction } from "@/lib/redux/transactionSlice";
+import { fetchCategories } from "@/lib/redux/categorySlice";
 
 interface TransactionForm {
   type: "income" | "expense";
   amount: string;
-  category: string;
+  category_id: string;
   description: string;
   date: CalendarDate;
-  paymentMethod: string;
-  recipient: string;
-  tags: string;
+  source: string;
+  confirmed: boolean;
+  discount: string;
+  payment_method: string;
 }
 
 export default function TransactionAddPage() {
   const router = useRouter();
+  const dispatch: AppDispatch = useDispatch();
+  const { token } = useSelector((state: RootState) => state.auth);
+  const { categories: apiCategories, loading: categoriesLoading } = useSelector(
+    (state: RootState) => state.categories,
+  );
+  
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [formData, setFormData] = useState<TransactionForm>({
     type: "expense",
     amount: "",
-    category: "",
+    category_id: "",
     description: "",
     date: today(getLocalTimeZone()),
-    paymentMethod: "cash",
-    recipient: "",
-    tags: "",
+    source: "",
+    confirmed: true,
+    discount: "0",
+    payment_method: "",
   });
 
   const paymentMethods = [
@@ -54,45 +65,100 @@ export default function TransactionAddPage() {
     { key: "credit", label: "Credit Card", icon: "🏦" },
     { key: "bank_transfer", label: "Bank Transfer", icon: "🏛️" },
     { key: "e_wallet", label: "E-Wallet", icon: "📱" },
+    { key: "other", label: "Other", icon: "📝" },
   ];
+
+  // Function to fetch categories
+  const fetchCategoriesData = () => {
+    if (!token) return;
+    dispatch(
+      fetchCategories({
+        token,
+        params: {
+          limit: 100, // Get all categories
+          offset: 1,
+          search: "",
+        },
+      }),
+    );
+  };
 
   // Simulate initial loading when component mounts
   useEffect(() => {
     const initializeForm = async () => {
-      // Simulate loading categories, payment methods, or user preferences
+      // Fetch categories from API
+      if (token) {
+        fetchCategoriesData();
+      }
+      
+      // Simulate loading
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setIsInitialLoading(false);
     };
 
     initializeForm();
-  }, []);
+  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!token) {
+      console.error("No authentication token available");
+      return;
+    }
+
+    // Validate required fields
+    if (!formData.amount || !formData.category_id || !formData.description) {
+      console.error("Please fill all required fields");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Prepare transaction data for API
+      const transactionData = {
+        category_id: formData.category_id,
+        type: formData.type,
+        description: formData.description,
+        amount: parseInt(formData.amount) || 0,
+        source: formData.source || "manual",
+        is_auto_categorized: false,
+        confirmed: formData.confirmed,
+        discount: parseInt(formData.discount) || 0,
+        transaction_date: formData.date.toDate(getLocalTimeZone()).toISOString(),
+        ai_category_confidence: 0.0, // Default since this is manual entry
+        payment_method: formData.source || "manual",
+      };
 
-      console.log("Transaction saved:", formData);
+      console.log("Submitting transaction:", transactionData);
+
+      // Dispatch create transaction action
+      await dispatch(createTransaction({ 
+        token, 
+        transaction: transactionData 
+      })).unwrap();
+
+      console.log("Transaction saved successfully");
 
       // Reset form
       setFormData({
         type: "expense",
         amount: "",
-        category: "",
+        category_id: "",
         description: "",
         date: today(getLocalTimeZone()),
-        paymentMethod: "cash",
-        recipient: "",
-        tags: "",
+        source: "",
+        confirmed: true,
+        discount: "0",
+        payment_method: "",
       });
 
       // Navigate back to transaction list
       router.push("/transaction");
     } catch (error) {
       console.error("Error saving transaction:", error);
+      // You could add a toast notification here
     } finally {
       setIsLoading(false);
     }
@@ -105,12 +171,8 @@ export default function TransactionAddPage() {
     }));
   };
 
-  const filteredCategories = categories.filter((cat) => {
-    if (formData.type === "income") {
-      return cat.name === "Salary" || cat.name === "Gift";
-    }
-
-    return cat.name !== "Salary";
+  const filteredCategories = apiCategories.filter((cat) => {
+    return cat.type === formData.type;
   });
 
   // Show skeleton when submitting the form
@@ -214,22 +276,20 @@ export default function TransactionAddPage() {
               <div>
                 <Select
                   isRequired
+                  isLoading={categoriesLoading}
                   label="Category"
                   placeholder="Select a category"
-                  selectedKeys={formData.category ? [formData.category] : []}
+                  selectedKeys={formData.category_id ? [formData.category_id] : []}
                   variant="bordered"
                   onSelectionChange={(keys) => {
                     const selected = Array.from(keys)[0] as string;
 
-                    handleInputChange("category", selected);
+                    handleInputChange("category_id", selected);
                   }}
                 >
                   {filteredCategories.map((category) => (
                     <SelectItem
-                      key={category.name}
-                      startContent={
-                        <span className="text-lg">{category.icon}</span>
-                      }
+                      key={category.category_id}
                     >
                       {category.name}
                     </SelectItem>
@@ -270,13 +330,13 @@ export default function TransactionAddPage() {
                   label="Payment Method"
                   placeholder="Select payment method"
                   selectedKeys={
-                    formData.paymentMethod ? [formData.paymentMethod] : []
+                    formData.source ? [formData.source] : []
                   }
                   variant="bordered"
                   onSelectionChange={(keys) => {
                     const selected = Array.from(keys)[0] as string;
 
-                    handleInputChange("paymentMethod", selected);
+                    handleInputChange("source", selected);
                   }}
                 >
                   {paymentMethods.map((method) => (
@@ -292,27 +352,6 @@ export default function TransactionAddPage() {
                 </Select>
               </div>
 
-              {/* Recipient/Payer */}
-              <div>
-                <Input
-                  label={
-                    formData.type === "income"
-                      ? "From (Payer)"
-                      : "To (Recipient)"
-                  }
-                  placeholder={
-                    formData.type === "income"
-                      ? "Who paid you?"
-                      : "Where did you spend?"
-                  }
-                  value={formData.recipient}
-                  variant="bordered"
-                  onValueChange={(value) =>
-                    handleInputChange("recipient", value)
-                  }
-                />
-              </div>
-
               {/* Description */}
               <div>
                 <Input
@@ -326,15 +365,20 @@ export default function TransactionAddPage() {
                 />
               </div>
 
-              {/* Tags */}
+              {/* Discount (optional) */}
               <div>
                 <Input
-                  description="Separate multiple tags with commas"
-                  label="Tags"
-                  placeholder="grocery, lunch, work (comma separated)"
-                  value={formData.tags}
+                  label="Discount (Optional)"
+                  placeholder="0"
+                  startContent={
+                    <div className="pointer-events-none flex items-center">
+                      <span className="text-default-400 text-small">Rp</span>
+                    </div>
+                  }
+                  type="number"
+                  value={formData.discount}
                   variant="bordered"
-                  onValueChange={(value) => handleInputChange("tags", value)}
+                  onValueChange={(value) => handleInputChange("discount", value)}
                 />
               </div>
             </CardBody>
@@ -350,6 +394,7 @@ export default function TransactionAddPage() {
               <Button
                 className="font-medium"
                 color="primary"
+                isDisabled={!formData.amount || !formData.category_id || !formData.description || isLoading}
                 isLoading={isLoading}
                 startContent={!isLoading && <Save size={18} />}
                 type="submit"
@@ -361,7 +406,7 @@ export default function TransactionAddPage() {
         </form>
 
         {/* Preview Card */}
-        {(formData.amount || formData.category) && (
+        {(formData.amount || formData.category_id) && (
           <Card className="mt-6 border-2 border-dashed border-gray-300 dark:border-gray-600">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
@@ -397,12 +442,14 @@ export default function TransactionAddPage() {
                     </span>
                   </div>
                 )}
-                {formData.category && (
+                {formData.category_id && (
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-400">
                       Category:
                     </span>
-                    <span className="font-medium">{formData.category}</span>
+                    <span className="font-medium">
+                      {apiCategories.find(cat => cat.category_id === formData.category_id)?.name || formData.category_id}
+                    </span>
                   </div>
                 )}
                 {formData.date && (
@@ -415,12 +462,32 @@ export default function TransactionAddPage() {
                     </span>
                   </div>
                 )}
-                {formData.recipient && (
+                {formData.source && (
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-400">
-                      {formData.type === "income" ? "From:" : "To:"}
+                      Payment Method:
                     </span>
-                    <span className="font-medium">{formData.recipient}</span>
+                    <span className="font-medium">
+                      {paymentMethods.find(method => method.key === formData.source)?.label || formData.source}
+                    </span>
+                  </div>
+                )}
+                {formData.description && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Description:
+                    </span>
+                    <span className="font-medium">{formData.description}</span>
+                  </div>
+                )}
+                {formData.discount && parseFloat(formData.discount) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Discount:
+                    </span>
+                    <span className="font-medium text-green-600">
+                      -Rp {parseFloat(formData.discount).toLocaleString("id-ID")}
+                    </span>
                   </div>
                 )}
               </div>

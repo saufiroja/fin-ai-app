@@ -18,6 +18,7 @@ export interface Transaction {
   updated_at: string;
   confirmed: boolean;
   discount: number;
+  payment_method: string;
 }
 
 export interface TransactionPagination {
@@ -49,7 +50,6 @@ export interface TransactionParams {
   limit?: number;
   offset?: number;
   category_id?: string;
-  category?: string;
   search?: string;
   startDate?: string;
   endDate?: string;
@@ -83,6 +83,7 @@ const MOCK_TRANSACTIONS: Transaction[] = [
     updated_at: "2024-01-15T12:00:00Z",
     confirmed: true,
     discount: 0,
+    payment_method: "cash",
   },
   {
     transaction_id: "2",
@@ -99,6 +100,7 @@ const MOCK_TRANSACTIONS: Transaction[] = [
     updated_at: "2024-01-01T09:00:00Z",
     confirmed: true,
     discount: 0,
+    payment_method: "bank_transfer",
   },
   {
     transaction_id: "3",
@@ -115,6 +117,7 @@ const MOCK_TRANSACTIONS: Transaction[] = [
     updated_at: "2024-01-14T15:30:00Z",
     confirmed: true,
     discount: 0,
+    payment_method: "credit_card",
   },
   {
     transaction_id: "4",
@@ -131,6 +134,7 @@ const MOCK_TRANSACTIONS: Transaction[] = [
     updated_at: "2024-01-10T08:00:00Z",
     confirmed: true,
     discount: 0,
+    payment_method: "bank_transfer",
   },
   {
     transaction_id: "5",
@@ -147,6 +151,7 @@ const MOCK_TRANSACTIONS: Transaction[] = [
     updated_at: "2024-01-12T20:15:00Z",
     confirmed: false,
     discount: 10000,
+    payment_method: "credit_card",
   },
 ];
 
@@ -251,9 +256,23 @@ export const fetchTransactions = createAsyncThunk(
 
 export const fetchOverview = createAsyncThunk(
   "transactions/fetchOverview",
-  async (token: string, { rejectWithValue }) => {
+  async (
+    { token, params }: { 
+      token: string; 
+      params?: { startDate?: string; endDate?: string; category_id?: string } 
+    }, 
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/transactions/overviews`, {
+      // Build query parameters for overview
+      const queryParams = new URLSearchParams();
+      if (params?.startDate) queryParams.append("start_date", params.startDate);
+      if (params?.endDate) queryParams.append("end_date", params.endDate);
+      if (params?.category_id) queryParams.append("category_id", params.category_id);
+
+      const url = `${API_BASE_URL}/transactions/overviews${queryParams.toString() ? `?${queryParams}` : ''}`;
+      
+      const response = await fetch(url, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

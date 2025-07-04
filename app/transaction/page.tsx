@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Table,
   TableHeader,
@@ -62,6 +62,7 @@ export default function TransactionPage() {
   );
 
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [category, setCategory] = useState("");
   const [viewMode, setViewMode] = useState<"table" | "card">("table");
   const [isMobile, setIsMobile] = useState(false);
@@ -72,8 +73,17 @@ export default function TransactionPage() {
 
   const pageSize = viewMode === "card" || isMobile ? 12 : 10;
 
-  // Function to fetch transactions using Redux
-  const fetchTransactionsData = () => {
+  // Debounce search input to avoid excessive API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300); // Reduced delay for more responsive feel
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Memoized function to fetch transactions using Redux
+  const fetchTransactionsData = useCallback(() => {
     if (!token) return;
 
     // Format date range for API with proper time formatting
@@ -83,47 +93,75 @@ export default function TransactionPage() {
     if (dateRange && dateRange.start && dateRange.end) {
       startDate = formatDateForAPI(dateRange.start, false); // 00:00:00
       endDate = formatDateForAPI(dateRange.end, true); // 23:59:59
-      
-      // Debug log to verify format
-      console.log("Date range for API:", { startDate, endDate });
     }
-
+    
+    const params = {
+      limit: pageSize,
+      offset: page,
+      category_id: category || undefined,
+      search: debouncedSearch || undefined,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+    };
+    
+    console.log('Fetching transactions with params:', params);
+    
     // Dispatch fetchTransactions with parameters
     dispatch(
       fetchTransactions({
         token,
-        params: {
-          limit: pageSize,
-          offset: page,
-          category: category || undefined, // This should be category_id
-          search: search || undefined,
-          startDate: startDate || undefined,
-          endDate: endDate || undefined,
-        },
+        params,
       }),
     );
-  };
+  }, [token, debouncedSearch, category, dateRange, page, pageSize, dispatch]);
 
-  // Function to fetch overview data
-  const fetchOverviewData = () => {
+  // Memoized function to fetch overview data
+  const fetchOverviewData = useCallback(() => {
     if (!token) return;
-    dispatch(fetchOverview(token));
-  };
+    
+    // Format date range for API with proper time formatting
+    let startDate = "";
+    let endDate = "";
 
-  // Function to fetch categories
-  const fetchCategoriesData = () => {
+    if (dateRange && dateRange.start && dateRange.end) {
+      startDate = formatDateForAPI(dateRange.start, false);
+      endDate = formatDateForAPI(dateRange.end, true);
+    }
+
+    // Build params object for overview
+    const params: any = {};
+    
+    if (startDate && endDate) {
+      params.startDate = startDate;
+      params.endDate = endDate;
+    }
+    
+    if (category) {
+      params.category_id = category;
+    }
+
+    console.log('Fetching overview with params:', params);
+
+    dispatch(fetchOverview({ 
+      token, 
+      params: Object.keys(params).length > 0 ? params : undefined 
+    }));
+  }, [token, dateRange, category, dispatch]);
+
+  // Memoized function to fetch categories
+  const fetchCategoriesData = useCallback(() => {
     if (!token) return;
     dispatch(
       fetchCategories({
         token,
         params: {
-          limit: 100, // Get all categories
+          limit: 100,
           offset: 1,
           search: "",
         },
       }),
     );
-  };
+  }, [token, dispatch]);
 
   // Function to handle delete transaction
   const handleDeleteTransaction = async (transactionId: string) => {
@@ -157,18 +195,22 @@ export default function TransactionPage() {
   // Fetch transactions when filters change
   useEffect(() => {
     fetchTransactionsData();
-  }, [token, search, category, dateRange, page, pageSize]);
+  }, [fetchTransactionsData]);
 
-  // Fetch overview data when token is available
+  // Fetch overview data when token is available or date range changes
   useEffect(() => {
-    fetchOverviewData();
-    fetchCategoriesData();
-  }, [token]);
+    if (token) {
+      fetchOverviewData();
+      if (!apiCategories.length) {
+        fetchCategoriesData();
+      }
+    }
+  }, [token, fetchOverviewData, fetchCategoriesData, apiCategories.length]);
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 when filters change (except page changes)
   useEffect(() => {
     setPage(1);
-  }, [search, category, dateRange, viewMode]);
+  }, [debouncedSearch, category, dateRange, viewMode]);
 
   // Helper function to parse currency string to number for balance calculation
   const parseCurrency = (currencyStr: string): number => {
@@ -201,8 +243,12 @@ export default function TransactionPage() {
 
   // Helper function to format date for API
   const formatDateForAPI = (date: any, isEndDate: boolean = false) => {
-    const dateObj = date.toDate(getLocalTimeZone());
-    const dateString = dateObj.toISOString().split('T')[0]; // YYYY-MM-DD
+    // Get the date in local timezone without time conversion issues
+    const year = date.year;
+    const month = String(date.month).padStart(2, '0');
+    const day = String(date.day).padStart(2, '0');
+    
+    const dateString = `${year}-${month}-${day}`;
     
     if (isEndDate) {
       return `${dateString} 23:59:59`;
@@ -232,18 +278,37 @@ export default function TransactionPage() {
   };
 
   // Create category options for select, including API categories
-  const categoryOptions = [
+  const categoryOptions = useMemo(() => [
     { category_id: "", name: "All Categories", icon: "📂" },
     ...apiCategories.map((cat) => ({
       ...cat,
       icon: getCategoryIcon(cat.name),
     })),
-  ];
+  ], [apiCategories]);
 
   const totalPages = pagination.total_pages || 1;
 
-  // Show loading skeleton while data is being fetched
-  if (loading) {
+  // Handle search input change with immediate UI feedback
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+  };
+
+  // Handle category change with immediate feedback
+  const handleCategoryChange = (keys: any) => {
+    const val = Array.from(keys)[0] as string;
+    setCategory(val === "" ? "" : val || "");
+  };
+
+  // Handle date range change with immediate feedback
+  const handleDateRangeChange = (range: any) => {
+    setDateRange(range);
+  };
+
+  // Determine if we should show loading state
+  const isDataLoading = loading && transactions.length === 0;
+
+  // Show loading skeleton while initial data is being fetched
+  if (isDataLoading) {
     return <Loading />;
   }
 
@@ -287,14 +352,14 @@ export default function TransactionPage() {
             <StatisticsCard
               icon={<TrendingDown className="w-6 h-6 text-red-600" />}
               iconBg="bg-red-100 dark:bg-red-900"
-              label="Total Pengeluaran"
+              label={`Total Pengeluaran${dateRange && dateRange.start && dateRange.end ? ' (Filtered)' : ''}`}
               value={overview?.total_expense || "Rp 0"}
               valueColor="text-red-500"
             />
             <StatisticsCard
               icon={<TrendingUp className="w-6 h-6 text-green-600" />}
               iconBg="bg-green-100 dark:bg-green-900"
-              label="Total Pemasukan"
+              label={`Total Pemasukan${dateRange && dateRange.start && dateRange.end ? ' (Filtered)' : ''}`}
               value={overview?.total_income || "Rp 0"}
               valueColor="text-green-500"
             />
@@ -309,7 +374,7 @@ export default function TransactionPage() {
                   ? "bg-blue-100 dark:bg-blue-900"
                   : "bg-orange-100 dark:bg-orange-900"
               }
-              label="Sisa Budget"
+              label={`Sisa Budget${dateRange && dateRange.start && dateRange.end ? ' (Filtered)' : ''}`}
               value={formatCurrency(balance)}
               valueColor={balance >= 0 ? "text-blue-500" : "text-orange-500"}
             />
@@ -347,8 +412,8 @@ export default function TransactionPage() {
                   startContent={<Search className="text-gray-400 w-5 h-5" />}
                   type="text"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onClear={() => setSearch("")}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  onClear={() => handleSearchChange("")}
                 />
               </div>
               <div className="flex gap-4 flex-1">
@@ -356,11 +421,7 @@ export default function TransactionPage() {
                   className="min-w-[180px]"
                   label="Category"
                   selectedKeys={category ? [category] : []}
-                  onSelectionChange={(keys) => {
-                    const val = Array.from(keys)[0] as string;
-
-                    setCategory(val === "" ? "" : val || "");
-                  }}
+                  onSelectionChange={handleCategoryChange}
                 >
                   {categoryOptions.map((cat) => (
                     <SelectItem key={cat.category_id} textValue={cat.name}>
@@ -376,7 +437,7 @@ export default function TransactionPage() {
                     >
                       <Calendar className="w-5 h-5 text-gray-400" />
                       {dateRange && dateRange.start && dateRange.end
-                        ? `${dateRange.start.toDate(getLocalTimeZone()).toLocaleDateString("id-ID")} - ${dateRange.end.toDate(getLocalTimeZone()).toLocaleDateString("id-ID")}`
+                        ? `${dateRange.start.day}/${dateRange.start.month}/${dateRange.start.year} - ${dateRange.end.day}/${dateRange.end.month}/${dateRange.end.year}`
                         : "Semua Tanggal"}
                     </Button>
                   </PopoverTrigger>
@@ -384,7 +445,7 @@ export default function TransactionPage() {
                     <RangeCalendar
                       aria-label="Date Range (Controlled)"
                       value={dateRange}
-                      onChange={setDateRange}
+                      onChange={handleDateRangeChange}
                     />
                   </PopoverContent>
                 </Popover>
@@ -406,28 +467,29 @@ export default function TransactionPage() {
         </Card>
 
         {/* Transactions Display */}
-        {viewMode === "table" && !isMobile ? (
-          <>
-            <div className="rounded-2xl overflow-hidden">
-              <div className="overflow-x-auto">
-                <Table
-                  aria-label="Daftar Transaksi"
-                  bottomContent={
-                    // Pagination controls
-                    <div className="flex justify-center items-center p-4">
-                      <Pagination
-                        isCompact
-                        showControls
-                        showShadow
-                        className="flex items-center gap-2"
-                        page={page}
-                        size="md"
-                        total={totalPages}
-                        onChange={setPage}
-                      />
-                    </div>
-                  }
-                >
+        <div className="transition-all duration-300 ease-in-out">
+          {viewMode === "table" && !isMobile ? (
+            <>
+              <div className="rounded-2xl overflow-hidden transition-all duration-300 ease-in-out">
+                <div className="overflow-x-auto">
+                  <Table
+                    aria-label="Daftar Transaksi"
+                    bottomContent={
+                      // Pagination controls
+                      <div className="flex justify-center items-center p-4">
+                        <Pagination
+                          isCompact
+                          showControls
+                          showShadow
+                          className="flex items-center gap-2"
+                          page={page}
+                          size="md"
+                          total={totalPages}
+                          onChange={setPage}
+                        />
+                      </div>
+                    }
+                  >
                   <TableHeader>
                     <TableColumn>Date</TableColumn>
                     <TableColumn>Description</TableColumn>
@@ -518,15 +580,14 @@ export default function TransactionPage() {
                 </Table>
               </div>
             </div>
-          </>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {transactions.map((tx) => (
-                <Card
-                  key={tx.transaction_id}
-                  className="hover:shadow-xl transition-all duration-300 hover:scale-105"
-                >
+          </>          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-300 ease-in-out">
+                {transactions.map((tx) => (
+                  <Card
+                    key={tx.transaction_id}
+                    className="hover:shadow-xl transition-all duration-300 hover:scale-105 animate-fadeIn"
+                  >
                   <CardHeader className="flex items-start justify-between mb-2 pb-0">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center text-lg">
@@ -601,21 +662,21 @@ export default function TransactionPage() {
                   </CardFooter>
                 </Card>
               ))}
-            </div>
-            <div className="flex justify-center mt-6">
-              <Pagination
-                isCompact
-                showControls
-                showShadow
-                className="flex items-center gap-2"
-                page={page}
-                size="md"
-                total={totalPages}
-                onChange={setPage}
-              />
-            </div>
+            </div>              <div className="flex justify-center mt-6">
+                <Pagination
+                  isCompact
+                  showControls
+                  showShadow
+                  className="flex items-center gap-2"
+                  page={page}
+                  size="md"
+                  total={totalPages}
+                  onChange={setPage}
+                />
+              </div>
           </>
         )}
+        </div>
       </div>
     </div>
   );
