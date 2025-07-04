@@ -10,6 +10,7 @@ const MOCK_USERS = [
   {
     id: 1,
     name: "Andi Pratama",
+    full_name: "Andi Pratama Kusuma",
     email: "andi@example.com",
     password: "password123",
     avatar: "A",
@@ -17,6 +18,7 @@ const MOCK_USERS = [
   {
     id: 2,
     name: "Budi Santoso",
+    full_name: "Budi Santoso Rahman",
     email: "budi@example.com",
     password: "password123",
     avatar: "B",
@@ -24,6 +26,7 @@ const MOCK_USERS = [
   {
     id: 3,
     name: "Citra Dewi",
+    full_name: "Citra Dewi Maharani",
     email: "citra@example.com",
     password: "password123",
     avatar: "C",
@@ -85,6 +88,7 @@ export const loginUser = createAsyncThunk(
         user: {
           id: mockUser.id,
           name: mockUser.name,
+          full_name: mockUser.full_name,
           email: mockUser.email,
           avatar: mockUser.avatar,
         },
@@ -135,6 +139,9 @@ const authSlice = createSlice({
     resetRegistrationSuccess: (state) => {
       state.registrationSuccess = false;
     },
+    clearError: (state) => {
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -168,5 +175,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, resetRegistrationSuccess } = authSlice.actions;
+export const { logout, resetRegistrationSuccess, clearError } =
+  authSlice.actions;
 export default authSlice.reducer;

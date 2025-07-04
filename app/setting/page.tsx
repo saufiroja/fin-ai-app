@@ -21,22 +21,46 @@ import {
   Trash2,
 } from "lucide-react";
 import Cookies from "js-cookie";
+import { useDispatch, useSelector } from "react-redux";
 
 import Loading from "./loading";
 
 import { ThemeSwitch } from "@/components/theme-switch";
+import { getUserMe } from "@/lib/redux/userSlice";
+import { AppDispatch, RootState } from "@/lib/redux/store";
 
 export default function SettingPage() {
+  const dispatch: AppDispatch = useDispatch();
+  const { token } = useSelector((state: RootState) => state.auth);
+  const { currentUser, loading: userLoading } = useSelector(
+    (state: RootState) => state.user,
+  );
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [formData, setFormData] = useState({
-    name: "John Doe",
-    email: "john.doe@example.com",
+    name: "",
+    email: "",
     bio: "Software developer passionate about building great user experiences.",
     language: "en",
     timezone: "UTC+7",
   });
+
+  // Get first letter of user's name or default to "U"
+  const getAvatarInitial = () => {
+    if (currentUser?.full_name) {
+      return currentUser.full_name.charAt(0).toUpperCase();
+    }
+    if (currentUser?.name) {
+      return currentUser.name.charAt(0).toUpperCase();
+    }
+    if (currentUser?.avatar) {
+      return currentUser.avatar.toUpperCase();
+    }
+
+    return "U";
+  };
 
   const [notifications, setNotifications] = useState({
     email: true,
@@ -45,6 +69,24 @@ export default function SettingPage() {
   });
 
   const [activeTab, setActiveTab] = useState("profile");
+
+  useEffect(() => {
+    // Fetch user data when component mounts
+    if (token && !currentUser) {
+      dispatch(getUserMe(token));
+    }
+  }, [token, currentUser, dispatch]);
+
+  useEffect(() => {
+    // Update form data when user data is loaded
+    if (currentUser) {
+      setFormData((prev) => ({
+        ...prev,
+        name: currentUser.full_name || currentUser.name || "",
+        email: currentUser.email || "",
+      }));
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     // Simulate loading user settings
@@ -149,7 +191,7 @@ export default function SettingPage() {
   ];
 
   // Show loading skeleton
-  if (isLoading) {
+  if (isLoading || userLoading) {
     return <Loading />;
   }
 
@@ -219,9 +261,10 @@ export default function SettingPage() {
                     <div className="flex items-center gap-4 mb-6">
                       <div className="relative">
                         <Avatar
-                          className="w-20 h-20"
+                          className="w-20 h-20 text-white font-semibold"
+                          color="primary"
+                          name={getAvatarInitial()}
                           size="lg"
-                          src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150"
                         />
                         <Button
                           isIconOnly
@@ -235,9 +278,13 @@ export default function SettingPage() {
                       </div>
                       <div>
                         <h3 className="text-lg font-semibold">
-                          {formData.name}
+                          {currentUser?.full_name ||
+                            currentUser?.name ||
+                            "User"}
                         </h3>
-                        <p className="text-default-500">{formData.email}</p>
+                        <p className="text-default-500">
+                          {currentUser?.email || "No email"}
+                        </p>
                         <Chip
                           className="mt-1"
                           color="success"

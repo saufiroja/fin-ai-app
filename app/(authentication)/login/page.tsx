@@ -10,7 +10,8 @@ import { Eye, EyeOff } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 
-import { loginUser } from "@/lib/redux/authSlice";
+import { loginUser, clearError } from "@/lib/redux/authSlice";
+import { getUserMe } from "@/lib/redux/userSlice";
 import { AppDispatch, RootState } from "@/lib/redux/store";
 
 export default function LoginPage() {
@@ -28,9 +29,33 @@ export default function LoginPage() {
     setIsPasswordVisible(!isPasswordVisible);
   };
 
+  const clearErrorState = () => {
+    // Clear error when user starts typing
+    if (error) {
+      dispatch(clearError());
+    }
+  };
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    clearErrorState();
+  };
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    clearErrorState();
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(loginUser({ email, password }));
+    const result = await dispatch(loginUser({ email, password }));
+
+    // If login is successful, fetch user data
+    if (loginUser.fulfilled.match(result)) {
+      const token = result.payload.data.access_token;
+
+      dispatch(getUserMe(token));
+    }
   };
 
   useEffect(() => {
@@ -71,6 +96,23 @@ export default function LoginPage() {
 
           <CardBody className="pt-0">
             <form className="space-y-6" onSubmit={handleLogin}>
+              {/* Error Message */}
+              {error && (
+                <div className="bg-danger-50 border border-danger-200 rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <Icon
+                      className="text-danger text-lg"
+                      icon="lucide:alert-circle"
+                    />
+                    <p className="text-danger text-sm font-medium">
+                      {typeof error === "string"
+                        ? error
+                        : "Invalid email or password"}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Email Input */}
               <Input
                 isRequired
@@ -85,7 +127,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 variant="bordered"
-                onValueChange={setEmail}
+                onValueChange={handleEmailChange}
               />
 
               {/* Password Input */}
@@ -115,7 +157,7 @@ export default function LoginPage() {
                 type={isPasswordVisible ? "text" : "password"}
                 value={password}
                 variant="bordered"
-                onValueChange={setPassword}
+                onValueChange={handlePasswordChange}
               />
 
               {/* Forgot Password Link */}

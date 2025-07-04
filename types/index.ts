@@ -7,6 +7,7 @@ export type IconSvgProps = SVGProps<SVGSVGElement> & {
 export interface User {
   id: number;
   name: string;
+  full_name?: string;
   email: string;
   avatar?: string;
 }

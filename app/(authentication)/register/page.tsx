@@ -203,9 +203,6 @@ export default function RegisterPage() {
                 isInvalid={!!errors.password}
                 label="Password"
                 placeholder="Create a password"
-                startContent={
-                  <Icon className="text-default-400" icon="lucide:lock" />
-                }
                 type={isPasswordVisible ? "text" : "password"}
                 value={formData.password}
                 variant="bordered"
@@ -235,9 +232,6 @@ export default function RegisterPage() {
                 isInvalid={!!errors.confirmPassword}
                 label="Confirm Password"
                 placeholder="Confirm your password"
-                startContent={
-                  <Icon className="text-default-400" icon="lucide:lock" />
-                }
                 type={isConfirmPasswordVisible ? "text" : "password"}
                 value={confirmPassword}
                 variant="bordered"

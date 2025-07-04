@@ -14,22 +14,36 @@ import NextLink from "next/link";
 import clsx from "clsx";
 import { Avatar } from "@heroui/avatar";
 import React from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { useEffect } from "react";
 
 import { siteConfig } from "@/config/site";
-import { RootState } from "@/lib/redux/store";
+import { RootState, AppDispatch } from "@/lib/redux/store";
+import { getUserMe } from "@/lib/redux/userSlice";
 
 export const Navbar = () => {
   const [menuOpen, setMenuOpen] = React.useState(false);
-  const { user } = useSelector((state: RootState) => state.auth);
+  const dispatch: AppDispatch = useDispatch();
+  const { token } = useSelector((state: RootState) => state.auth);
+  const { currentUser } = useSelector((state: RootState) => state.user);
+
+  // Fetch user data when component mounts
+  useEffect(() => {
+    if (token && !currentUser) {
+      dispatch(getUserMe(token));
+    }
+  }, [token, currentUser, dispatch]);
 
   // Get first letter of user's name or default to "U"
   const getAvatarInitial = () => {
-    if (user?.name) {
-      return user.name.charAt(0).toUpperCase();
+    if (currentUser?.full_name) {
+      return currentUser.full_name.charAt(0).toUpperCase();
     }
-    if (user?.avatar) {
-      return user.avatar.toUpperCase();
+    if (currentUser?.name) {
+      return currentUser.name.charAt(0).toUpperCase();
+    }
+    if (currentUser?.avatar) {
+      return currentUser.avatar.toUpperCase();
     }
 
     return "U";

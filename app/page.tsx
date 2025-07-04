@@ -1,6 +1,5 @@
 "use client";
 import { Textarea } from "@heroui/input";
-import React from "react";
 import { Button } from "@heroui/button";
 import { Icon } from "@iconify/react";
 import { Card, CardBody } from "@heroui/card";
@@ -8,15 +7,23 @@ import { Tabs, Tab } from "@heroui/tabs";
 import { Form } from "@heroui/form";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useState } from "react";
 
 import SparkleIcon from "@/components/sparkle-icon";
 import { PhotoUpload } from "@/components/photo-upload";
 import { useChatMessages } from "@/hooks/use-chat-message";
 import { subtitle } from "@/components/primitives";
+import { getUserMe } from "@/lib/redux/userSlice";
+import { AppDispatch, RootState } from "@/lib/redux/store";
 
 export default function Home() {
-  // Simulate user login (replace with real user context if available)
-  const user = { name: "Andi" };
+  const dispatch: AppDispatch = useDispatch();
+  const { user: authUser, token } = useSelector(
+    (state: RootState) => state.auth,
+  );
+  const { currentUser } = useSelector((state: RootState) => state.user);
+
   const subtitles = [
     "AI-powered financial analysis and insights for smarter decisions.",
     "Yuk, mulai kelola keuangan dengan lebih cerdas hari ini!",
@@ -30,16 +37,29 @@ export default function Home() {
     "Yuk, capai tujuan finansialmu bersama FinAI!",
   ];
 
-  const [randomSubtitle, setRandomSubtitle] = React.useState(subtitles[0]);
+  const [randomSubtitle, setRandomSubtitle] = useState(subtitles[0]);
   const { addMessage } = useChatMessages();
-  const [newMessage, setNewMessage] = React.useState("");
-  const [activeTab, setActiveTab] = React.useState("chat");
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [newMessage, setNewMessage] = useState("");
+  const [activeTab, setActiveTab] = useState("chat");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  React.useEffect(() => {
+  useEffect(() => {
     setRandomSubtitle(subtitles[Math.floor(Math.random() * subtitles.length)]);
   }, []);
+
+  // Fetch user data when component mounts and token is available
+  useEffect(() => {
+    console.log("Checking user data...", {
+      token: !!token,
+      currentUser,
+      hasFullName: !!currentUser?.full_name,
+    });
+    if (token && (!currentUser || !currentUser.full_name)) {
+      console.log("Dispatching getUserMe...");
+      dispatch(getUserMe(token));
+    }
+  }, [token, currentUser, dispatch]);
 
   const handleSendMessage = async () => {
     if (newMessage.trim() && !isLoading) {
@@ -119,23 +139,13 @@ export default function Home() {
         className="flex flex-col items-center gap-6 text-center max-w-2xl"
         variants={itemVariants}
       >
-        {/* Logo or Brand */}
-        <div className="relative">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
-            <Icon className="w-8 h-8 text-white" icon="lucide:brain-circuit" />
-          </div>
-          <div className="absolute -top-1 -right-1 w-6 h-6 bg-success rounded-full flex items-center justify-center">
-            <Icon className="w-3 h-3 text-white" icon="lucide:sparkles" />
-          </div>
-        </div>
-
         {/* Personalized Greeting */}
-        {user && (
+        {currentUser && (
           <motion.div
             className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"
             variants={itemVariants}
           >
-            Halo, {user.name}! 👋
+            Halo, {currentUser.full_name || currentUser.name || "User"}! 👋
           </motion.div>
         )}
 
@@ -168,14 +178,14 @@ export default function Home() {
             }}
           >
             {/* Enhanced Tabs */}
-            <div className="px-6 pt-6 pb-2">
+            <div className="px-0 pt-6 pb-2">
               <Tabs
                 classNames={{
                   tabList:
-                    "gap-6 w-full relative rounded-none p-0 border-b border-divider",
+                    "gap-0 w-full relative rounded-none p-0 border-b border-divider",
                   cursor: "w-full bg-primary",
-                  tab: "max-w-fit px-0 h-12",
-                  tabContent: "group-data-[selected=true]:text-primary",
+                  tab: "flex-1 px-0 h-12",
+                  tabContent: "group-data-[selected=true]:text-primary w-full",
                 }}
                 selectedKey={activeTab}
                 variant="underlined"
@@ -184,7 +194,7 @@ export default function Home() {
                 <Tab
                   key="chat"
                   title={
-                    <div className="flex items-center gap-2 px-2">
+                    <div className="flex items-center justify-center gap-2 px-4 py-2 w-full">
                       <div className="p-1.5 rounded-lg bg-primary/10 group-data-[selected=true]:bg-primary/20 transition-colors">
                         <Icon
                           className="w-4 h-4 text-primary"
@@ -198,7 +208,7 @@ export default function Home() {
                 <Tab
                   key="scan"
                   title={
-                    <div className="flex items-center gap-2 px-2">
+                    <div className="flex items-center justify-center gap-2 px-4 py-2 w-full">
                       <div className="p-1.5 rounded-lg bg-success/10 group-data-[selected=true]:bg-success/20 transition-colors">
                         <Icon
                           className="w-4 h-4 text-success"
