@@ -44,7 +44,7 @@ export default function TransactionAddPage() {
   const { categories: apiCategories, loading: categoriesLoading } = useSelector(
     (state: RootState) => state.categories,
   );
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [formData, setFormData] = useState<TransactionForm>({
@@ -90,7 +90,7 @@ export default function TransactionAddPage() {
       if (token) {
         fetchCategoriesData();
       }
-      
+
       // Simulate loading
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setIsInitialLoading(false);
@@ -101,15 +101,17 @@ export default function TransactionAddPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!token) {
       console.error("No authentication token available");
+
       return;
     }
 
     // Validate required fields
     if (!formData.amount || !formData.category_id || !formData.description) {
       console.error("Please fill all required fields");
+
       return;
     }
 
@@ -126,7 +128,9 @@ export default function TransactionAddPage() {
         is_auto_categorized: false,
         confirmed: formData.confirmed,
         discount: parseInt(formData.discount) || 0,
-        transaction_date: formData.date.toDate(getLocalTimeZone()).toISOString(),
+        transaction_date: formData.date
+          .toDate(getLocalTimeZone())
+          .toISOString(),
         ai_category_confidence: 0.0, // Default since this is manual entry
         payment_method: formData.source || "manual",
       };
@@ -134,10 +138,12 @@ export default function TransactionAddPage() {
       console.log("Submitting transaction:", transactionData);
 
       // Dispatch create transaction action
-      await dispatch(createTransaction({ 
-        token, 
-        transaction: transactionData 
-      })).unwrap();
+      await dispatch(
+        createTransaction({
+          token,
+          transaction: transactionData,
+        }),
+      ).unwrap();
 
       console.log("Transaction saved successfully");
 
@@ -279,7 +285,9 @@ export default function TransactionAddPage() {
                   isLoading={categoriesLoading}
                   label="Category"
                   placeholder="Select a category"
-                  selectedKeys={formData.category_id ? [formData.category_id] : []}
+                  selectedKeys={
+                    formData.category_id ? [formData.category_id] : []
+                  }
                   variant="bordered"
                   onSelectionChange={(keys) => {
                     const selected = Array.from(keys)[0] as string;
@@ -288,9 +296,7 @@ export default function TransactionAddPage() {
                   }}
                 >
                   {filteredCategories.map((category) => (
-                    <SelectItem
-                      key={category.category_id}
-                    >
+                    <SelectItem key={category.category_id}>
                       {category.name}
                     </SelectItem>
                   ))}
@@ -329,9 +335,7 @@ export default function TransactionAddPage() {
                   isRequired
                   label="Payment Method"
                   placeholder="Select payment method"
-                  selectedKeys={
-                    formData.source ? [formData.source] : []
-                  }
+                  selectedKeys={formData.source ? [formData.source] : []}
                   variant="bordered"
                   onSelectionChange={(keys) => {
                     const selected = Array.from(keys)[0] as string;
@@ -378,7 +382,9 @@ export default function TransactionAddPage() {
                   type="number"
                   value={formData.discount}
                   variant="bordered"
-                  onValueChange={(value) => handleInputChange("discount", value)}
+                  onValueChange={(value) =>
+                    handleInputChange("discount", value)
+                  }
                 />
               </div>
             </CardBody>
@@ -394,7 +400,12 @@ export default function TransactionAddPage() {
               <Button
                 className="font-medium"
                 color="primary"
-                isDisabled={!formData.amount || !formData.category_id || !formData.description || isLoading}
+                isDisabled={
+                  !formData.amount ||
+                  !formData.category_id ||
+                  !formData.description ||
+                  isLoading
+                }
                 isLoading={isLoading}
                 startContent={!isLoading && <Save size={18} />}
                 type="submit"
@@ -448,7 +459,9 @@ export default function TransactionAddPage() {
                       Category:
                     </span>
                     <span className="font-medium">
-                      {apiCategories.find(cat => cat.category_id === formData.category_id)?.name || formData.category_id}
+                      {apiCategories.find(
+                        (cat) => cat.category_id === formData.category_id,
+                      )?.name || formData.category_id}
                     </span>
                   </div>
                 )}
@@ -468,7 +481,9 @@ export default function TransactionAddPage() {
                       Payment Method:
                     </span>
                     <span className="font-medium">
-                      {paymentMethods.find(method => method.key === formData.source)?.label || formData.source}
+                      {paymentMethods.find(
+                        (method) => method.key === formData.source,
+                      )?.label || formData.source}
                     </span>
                   </div>
                 )}
@@ -486,7 +501,8 @@ export default function TransactionAddPage() {
                       Discount:
                     </span>
                     <span className="font-medium text-green-600">
-                      -Rp {parseFloat(formData.discount).toLocaleString("id-ID")}
+                      -Rp{" "}
+                      {parseFloat(formData.discount).toLocaleString("id-ID")}
                     </span>
                   </div>
                 )}

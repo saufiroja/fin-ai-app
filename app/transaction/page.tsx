@@ -27,7 +27,6 @@ import { Input } from "@heroui/input";
 import { RangeCalendar } from "@heroui/calendar";
 import { Tabs, Tab } from "@heroui/tabs";
 import { Select, SelectItem } from "@heroui/select";
-import { getLocalTimeZone } from "@internationalized/date";
 import { Popover, PopoverTrigger, PopoverContent } from "@heroui/popover";
 import { Pagination } from "@heroui/pagination";
 import NextLink from "next/link";
@@ -94,7 +93,7 @@ export default function TransactionPage() {
       startDate = formatDateForAPI(dateRange.start, false); // 00:00:00
       endDate = formatDateForAPI(dateRange.end, true); // 23:59:59
     }
-    
+
     const params = {
       limit: pageSize,
       offset: page,
@@ -103,9 +102,9 @@ export default function TransactionPage() {
       startDate: startDate || undefined,
       endDate: endDate || undefined,
     };
-    
-    console.log('Fetching transactions with params:', params);
-    
+
+    console.log("Fetching transactions with params:", params);
+
     // Dispatch fetchTransactions with parameters
     dispatch(
       fetchTransactions({
@@ -118,7 +117,7 @@ export default function TransactionPage() {
   // Memoized function to fetch overview data
   const fetchOverviewData = useCallback(() => {
     if (!token) return;
-    
+
     // Format date range for API with proper time formatting
     let startDate = "";
     let endDate = "";
@@ -130,22 +129,24 @@ export default function TransactionPage() {
 
     // Build params object for overview
     const params: any = {};
-    
+
     if (startDate && endDate) {
       params.startDate = startDate;
       params.endDate = endDate;
     }
-    
+
     if (category) {
       params.category_id = category;
     }
 
-    console.log('Fetching overview with params:', params);
+    console.log("Fetching overview with params:", params);
 
-    dispatch(fetchOverview({ 
-      token, 
-      params: Object.keys(params).length > 0 ? params : undefined 
-    }));
+    dispatch(
+      fetchOverview({
+        token,
+        params: Object.keys(params).length > 0 ? params : undefined,
+      }),
+    );
   }, [token, dateRange, category, dispatch]);
 
   // Memoized function to fetch categories
@@ -245,11 +246,11 @@ export default function TransactionPage() {
   const formatDateForAPI = (date: any, isEndDate: boolean = false) => {
     // Get the date in local timezone without time conversion issues
     const year = date.year;
-    const month = String(date.month).padStart(2, '0');
-    const day = String(date.day).padStart(2, '0');
-    
+    const month = String(date.month).padStart(2, "0");
+    const day = String(date.day).padStart(2, "0");
+
     const dateString = `${year}-${month}-${day}`;
-    
+
     if (isEndDate) {
       return `${dateString} 23:59:59`;
     } else {
@@ -278,13 +279,16 @@ export default function TransactionPage() {
   };
 
   // Create category options for select, including API categories
-  const categoryOptions = useMemo(() => [
-    { category_id: "", name: "All Categories", icon: "📂" },
-    ...apiCategories.map((cat) => ({
-      ...cat,
-      icon: getCategoryIcon(cat.name),
-    })),
-  ], [apiCategories]);
+  const categoryOptions = useMemo(
+    () => [
+      { category_id: "", name: "All Categories", icon: "📂" },
+      ...apiCategories.map((cat) => ({
+        ...cat,
+        icon: getCategoryIcon(cat.name),
+      })),
+    ],
+    [apiCategories],
+  );
 
   const totalPages = pagination.total_pages || 1;
 
@@ -296,6 +300,7 @@ export default function TransactionPage() {
   // Handle category change with immediate feedback
   const handleCategoryChange = (keys: any) => {
     const val = Array.from(keys)[0] as string;
+
     setCategory(val === "" ? "" : val || "");
   };
 
@@ -352,14 +357,14 @@ export default function TransactionPage() {
             <StatisticsCard
               icon={<TrendingDown className="w-6 h-6 text-red-600" />}
               iconBg="bg-red-100 dark:bg-red-900"
-              label={`Total Pengeluaran${dateRange && dateRange.start && dateRange.end ? ' (Filtered)' : ''}`}
+              label={`Total Pengeluaran${dateRange && dateRange.start && dateRange.end ? " (Filtered)" : ""}`}
               value={overview?.total_expense || "Rp 0"}
               valueColor="text-red-500"
             />
             <StatisticsCard
               icon={<TrendingUp className="w-6 h-6 text-green-600" />}
               iconBg="bg-green-100 dark:bg-green-900"
-              label={`Total Pemasukan${dateRange && dateRange.start && dateRange.end ? ' (Filtered)' : ''}`}
+              label={`Total Pemasukan${dateRange && dateRange.start && dateRange.end ? " (Filtered)" : ""}`}
               value={overview?.total_income || "Rp 0"}
               valueColor="text-green-500"
             />
@@ -374,7 +379,7 @@ export default function TransactionPage() {
                   ? "bg-blue-100 dark:bg-blue-900"
                   : "bg-orange-100 dark:bg-orange-900"
               }
-              label={`Sisa Budget${dateRange && dateRange.start && dateRange.end ? ' (Filtered)' : ''}`}
+              label={`Sisa Budget${dateRange && dateRange.start && dateRange.end ? " (Filtered)" : ""}`}
               value={formatCurrency(balance)}
               valueColor={balance >= 0 ? "text-blue-500" : "text-orange-500"}
             />
@@ -490,97 +495,100 @@ export default function TransactionPage() {
                       </div>
                     }
                   >
-                  <TableHeader>
-                    <TableColumn>Date</TableColumn>
-                    <TableColumn>Description</TableColumn>
-                    <TableColumn>Category</TableColumn>
-                    <TableColumn>Amount</TableColumn>
-                    <TableColumn>Type</TableColumn>
-                    <TableColumn>Actions</TableColumn>
-                  </TableHeader>
-                  <TableBody emptyContent={"No transactions found."}>
-                    {transactions.map((tx) => (
-                      <TableRow key={tx.transaction_id}>
-                        <TableCell className="text-foreground">
-                          {formatDate(tx.transaction_date)}
-                        </TableCell>
-                        <TableCell className="text-foreground">
-                          {tx.description}
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            color="primary"
-                            startContent={
-                              <span>
-                                {getCategoryIcon(
-                                  getCategoryDisplay(tx.category_id),
-                                )}
-                              </span>
-                            }
-                            variant="flat"
-                          >
-                            {getCategoryDisplay(tx.category_id)}
-                          </Chip>
-                        </TableCell>
-                        <TableCell>
-                          <span
-                            className={
-                              tx.type === "income"
-                                ? "text-green-600 dark:text-green-400 font-semibold"
-                                : "text-red-500 dark:text-red-400 font-semibold"
-                            }
-                          >
-                            {tx.type === "income" ? "+" : "-"}
-                            {formatCurrency(tx.amount)}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            color={tx.type === "income" ? "success" : "danger"}
-                            variant="flat"
-                          >
-                            {getTypeDisplay(tx.type)}
-                          </Chip>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Tooltip content="View">
-                              <NextLink
-                                href={`/transaction/view/${tx.transaction_id}`}
-                              >
-                                <button className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg transition-colors duration-150">
-                                  <Eye className="w-4 h-4" />
+                    <TableHeader>
+                      <TableColumn>Date</TableColumn>
+                      <TableColumn>Description</TableColumn>
+                      <TableColumn>Category</TableColumn>
+                      <TableColumn>Amount</TableColumn>
+                      <TableColumn>Type</TableColumn>
+                      <TableColumn>Actions</TableColumn>
+                    </TableHeader>
+                    <TableBody emptyContent={"No transactions found."}>
+                      {transactions.map((tx) => (
+                        <TableRow key={tx.transaction_id}>
+                          <TableCell className="text-foreground">
+                            {formatDate(tx.transaction_date)}
+                          </TableCell>
+                          <TableCell className="text-foreground">
+                            {tx.description}
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              color="primary"
+                              startContent={
+                                <span>
+                                  {getCategoryIcon(
+                                    getCategoryDisplay(tx.category_id),
+                                  )}
+                                </span>
+                              }
+                              variant="flat"
+                            >
+                              {getCategoryDisplay(tx.category_id)}
+                            </Chip>
+                          </TableCell>
+                          <TableCell>
+                            <span
+                              className={
+                                tx.type === "income"
+                                  ? "text-green-600 dark:text-green-400 font-semibold"
+                                  : "text-red-500 dark:text-red-400 font-semibold"
+                              }
+                            >
+                              {tx.type === "income" ? "+" : "-"}
+                              {formatCurrency(tx.amount)}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              color={
+                                tx.type === "income" ? "success" : "danger"
+                              }
+                              variant="flat"
+                            >
+                              {getTypeDisplay(tx.type)}
+                            </Chip>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Tooltip content="View">
+                                <NextLink
+                                  href={`/transaction/view/${tx.transaction_id}`}
+                                >
+                                  <button className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg transition-colors duration-150">
+                                    <Eye className="w-4 h-4" />
+                                  </button>
+                                </NextLink>
+                              </Tooltip>
+                              <Tooltip content="Edit">
+                                <NextLink
+                                  href={`/transaction/update/${tx.transaction_id}`}
+                                >
+                                  <button className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg transition-colors duration-150">
+                                    <Edit3 className="w-4 h-4" />
+                                  </button>
+                                </NextLink>
+                              </Tooltip>
+                              <Tooltip content="Delete">
+                                <button
+                                  className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors duration-150"
+                                  onClick={() =>
+                                    handleDeleteTransaction(tx.transaction_id)
+                                  }
+                                >
+                                  <Trash2 className="w-4 h-4" />
                                 </button>
-                              </NextLink>
-                            </Tooltip>
-                            <Tooltip content="Edit">
-                              <NextLink
-                                href={`/transaction/update/${tx.transaction_id}`}
-                              >
-                                <button className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg transition-colors duration-150">
-                                  <Edit3 className="w-4 h-4" />
-                                </button>
-                              </NextLink>
-                            </Tooltip>
-                            <Tooltip content="Delete">
-                              <button
-                                className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors duration-150"
-                                onClick={() =>
-                                  handleDeleteTransaction(tx.transaction_id)
-                                }
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </Tooltip>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                              </Tooltip>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
-            </div>
-          </>          ) : (
+            </>
+          ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-300 ease-in-out">
                 {transactions.map((tx) => (
@@ -588,81 +596,84 @@ export default function TransactionPage() {
                     key={tx.transaction_id}
                     className="hover:shadow-xl transition-all duration-300 hover:scale-105 animate-fadeIn"
                   >
-                  <CardHeader className="flex items-start justify-between mb-2 pb-0">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center text-lg">
-                        {getCategoryIcon(getCategoryDisplay(tx.category_id))}
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-                          {tx.description}
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {formatDate(tx.transaction_date)}
-                        </p>
-                      </div>
-                    </div>
-                    <Chip
-                      color={tx.type === "income" ? "success" : "danger"}
-                      variant="flat"
-                    >
-                      {getTypeDisplay(tx.type)}
-                    </Chip>
-                  </CardHeader>
-                  <CardBody className="mb-2">
-                    <Chip
-                      color="primary"
-                      startContent={
-                        <span>
+                    <CardHeader className="flex items-start justify-between mb-2 pb-0">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center text-lg">
                           {getCategoryIcon(getCategoryDisplay(tx.category_id))}
-                        </span>
-                      }
-                      variant="flat"
-                    >
-                      {getCategoryDisplay(tx.category_id)}
-                    </Chip>
-                  </CardBody>
-                  <CardFooter className="flex items-center justify-between pt-0">
-                    <span
-                      className={`text-xl font-bold ${tx.type === "income" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
-                    >
-                      {tx.type === "income" ? "+" : "-"}
-                      {formatCurrency(tx.amount)}
-                    </span>
-                    <div className="flex gap-1">
-                      <Tooltip content="View">
-                        <NextLink
-                          href={`/transaction/view/${tx.transaction_id}`}
-                        >
-                          <button className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg transition-colors duration-150">
-                            <Eye className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                            {tx.description}
+                          </h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {formatDate(tx.transaction_date)}
+                          </p>
+                        </div>
+                      </div>
+                      <Chip
+                        color={tx.type === "income" ? "success" : "danger"}
+                        variant="flat"
+                      >
+                        {getTypeDisplay(tx.type)}
+                      </Chip>
+                    </CardHeader>
+                    <CardBody className="mb-2">
+                      <Chip
+                        color="primary"
+                        startContent={
+                          <span>
+                            {getCategoryIcon(
+                              getCategoryDisplay(tx.category_id),
+                            )}
+                          </span>
+                        }
+                        variant="flat"
+                      >
+                        {getCategoryDisplay(tx.category_id)}
+                      </Chip>
+                    </CardBody>
+                    <CardFooter className="flex items-center justify-between pt-0">
+                      <span
+                        className={`text-xl font-bold ${tx.type === "income" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+                      >
+                        {tx.type === "income" ? "+" : "-"}
+                        {formatCurrency(tx.amount)}
+                      </span>
+                      <div className="flex gap-1">
+                        <Tooltip content="View">
+                          <NextLink
+                            href={`/transaction/view/${tx.transaction_id}`}
+                          >
+                            <button className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg transition-colors duration-150">
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          </NextLink>
+                        </Tooltip>
+                        <Tooltip content="Edit">
+                          <NextLink
+                            href={`/transaction/update/${tx.transaction_id}`}
+                          >
+                            <button className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg transition-colors duration-150">
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                          </NextLink>
+                        </Tooltip>
+                        <Tooltip content="Delete">
+                          <button
+                            className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors duration-150"
+                            onClick={() =>
+                              handleDeleteTransaction(tx.transaction_id)
+                            }
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </button>
-                        </NextLink>
-                      </Tooltip>
-                      <Tooltip content="Edit">
-                        <NextLink
-                          href={`/transaction/update/${tx.transaction_id}`}
-                        >
-                          <button className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg transition-colors duration-150">
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                        </NextLink>
-                      </Tooltip>
-                      <Tooltip content="Delete">
-                        <button
-                          className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors duration-150"
-                          onClick={() =>
-                            handleDeleteTransaction(tx.transaction_id)
-                          }
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </Tooltip>
-                    </div>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>              <div className="flex justify-center mt-6">
+                        </Tooltip>
+                      </div>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>{" "}
+              <div className="flex justify-center mt-6">
                 <Pagination
                   isCompact
                   showControls
@@ -674,8 +685,8 @@ export default function TransactionPage() {
                   onChange={setPage}
                 />
               </div>
-          </>
-        )}
+            </>
+          )}
         </div>
       </div>
     </div>

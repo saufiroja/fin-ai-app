@@ -34,6 +34,12 @@ export interface TransactionResponse {
   pagination: TransactionPagination;
 }
 
+export interface SingleTransactionResponse {
+  status: number;
+  message: string;
+  data: Transaction | null;
+}
+
 export interface OverviewData {
   total_income: string;
   total_expense: string;
@@ -59,10 +65,13 @@ export interface TransactionState {
   transactions: Transaction[];
   pagination: TransactionPagination;
   overview: OverviewData | null;
+  currentTransaction: Transaction | null;
   loading: boolean;
   overviewLoading: boolean;
+  currentTransactionLoading: boolean;
   error: string | null;
   overviewError: string | null;
+  currentTransactionError: string | null;
   lastFetchParams: TransactionParams | null;
 }
 
@@ -257,21 +266,26 @@ export const fetchTransactions = createAsyncThunk(
 export const fetchOverview = createAsyncThunk(
   "transactions/fetchOverview",
   async (
-    { token, params }: { 
-      token: string; 
-      params?: { startDate?: string; endDate?: string; category_id?: string } 
-    }, 
-    { rejectWithValue }
+    {
+      token,
+      params,
+    }: {
+      token: string;
+      params?: { startDate?: string; endDate?: string; category_id?: string };
+    },
+    { rejectWithValue },
   ) => {
     try {
       // Build query parameters for overview
       const queryParams = new URLSearchParams();
+
       if (params?.startDate) queryParams.append("start_date", params.startDate);
       if (params?.endDate) queryParams.append("end_date", params.endDate);
-      if (params?.category_id) queryParams.append("category_id", params.category_id);
+      if (params?.category_id)
+        queryParams.append("category_id", params.category_id);
 
-      const url = `${API_BASE_URL}/transactions/overviews${queryParams.toString() ? `?${queryParams}` : ''}`;
-      
+      const url = `${API_BASE_URL}/transactions/overviews${queryParams.toString() ? `?${queryParams}` : ""}`;
+
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -304,12 +318,20 @@ export const createTransaction = createAsyncThunk(
       transaction,
     }: {
       token: string;
-      transaction: Omit<
-        Transaction,
-        "transaction_id" | "user_id" | "created_at" | "updated_at"
-      >;
+      transaction: {
+        category_id: string;
+        type: "expense" | "income";
+        description: string;
+        amount: number;
+        source: string;
+        transaction_date: string;
+        ai_category_confidence: number;
+        is_auto_categorized: boolean;
+        confirmed: boolean;
+        discount: number;
+        payment_method: string;
+      };
     },
-    { rejectWithValue },
   ) => {
     try {
       const response = await fetch(`${API_BASE_URL}/transactions`, {
@@ -325,7 +347,7 @@ export const createTransaction = createAsyncThunk(
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
+      let data: SingleTransactionResponse = await response.json();
 
       return data;
     } catch (error: any) {
@@ -344,7 +366,7 @@ export const createTransaction = createAsyncThunk(
         status: 201,
         message: "Transaction created successfully",
         data: mockTransaction,
-      };
+      } as SingleTransactionResponse;
     }
   },
 );
@@ -421,6 +443,43 @@ export const deleteTransaction = createAsyncThunk(
   },
 );
 
+export const fetchTransactionById = createAsyncThunk(
+  "transactions/fetchTransactionById",
+  async (
+    { token, id }: { token: string; id: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/transactions/${id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data: SingleTransactionResponse = await response.json();
+
+      return data.data;
+    } catch (error: any) {
+      console.log("API not available, using mock transaction data", error.message);
+
+      // Find transaction in mock data
+      const mockTransaction = MOCK_TRANSACTIONS.find(t => t.transaction_id === id);
+      
+      if (mockTransaction) {
+        return mockTransaction;
+      } else {
+        throw new Error("Transaction not found");
+      }
+    }
+  },
+);
+
 // Initial state
 const initialState: TransactionState = {
   transactions: [],
@@ -430,10 +489,13 @@ const initialState: TransactionState = {
     total_pages: 0,
   },
   overview: null,
+  currentTransaction: null,
   loading: false,
   overviewLoading: false,
+  currentTransactionLoading: false,
   error: null,
   overviewError: null,
+  currentTransactionError: null,
   lastFetchParams: null,
 };
 
@@ -448,6 +510,9 @@ const transactionSlice = createSlice({
     clearOverviewError: (state) => {
       state.overviewError = null;
     },
+    clearCurrentTransactionError: (state) => {
+      state.currentTransactionError = null;
+    },
     clearTransactions: (state) => {
       state.transactions = [];
       state.pagination = {
@@ -458,6 +523,9 @@ const transactionSlice = createSlice({
     },
     clearOverview: (state) => {
       state.overview = null;
+    },
+    clearCurrentTransaction: (state) => {
+      state.currentTransaction = null;
     },
     setTransactionLoading: (state, action) => {
       state.loading = action.payload;
@@ -560,6 +628,21 @@ const transactionSlice = createSlice({
         state.overviewLoading = false;
         state.overviewError =
           action.error.message || "Failed to fetch overview";
+      })
+
+      // Fetch Transaction By ID
+      .addCase(fetchTransactionById.pending, (state) => {
+        state.currentTransactionLoading = true;
+        state.currentTransactionError = null;
+      })
+      .addCase(fetchTransactionById.fulfilled, (state, action) => {
+        state.currentTransactionLoading = false;
+        state.currentTransaction = action.payload;
+      })
+      .addCase(fetchTransactionById.rejected, (state, action) => {
+        state.currentTransactionLoading = false;
+        state.currentTransactionError =
+          action.error.message || "Failed to fetch transaction details";
       });
   },
 });
@@ -567,8 +650,10 @@ const transactionSlice = createSlice({
 export const {
   clearTransactionError,
   clearOverviewError,
+  clearCurrentTransactionError,
   clearTransactions,
   clearOverview,
+  clearCurrentTransaction,
   setTransactionLoading,
 } = transactionSlice.actions;
 export default transactionSlice.reducer;

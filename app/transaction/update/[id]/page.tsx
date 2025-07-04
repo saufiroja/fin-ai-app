@@ -22,73 +22,74 @@ import {
   Calendar,
 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
+import { useSelector, useDispatch } from "react-redux";
 
-import Loading from "./loading";
+import Loading from "../../loading";
 
 import { categories } from "@/dummy/categories";
+import { RootState, AppDispatch } from "@/lib/redux/store";
+import { 
+  updateTransaction, 
+  fetchTransactionById, 
+  clearCurrentTransaction,
+  clearCurrentTransactionError 
+} from "@/lib/redux/transactionSlice";
+import { fetchCategories } from "@/lib/redux/categorySlice";
 
 interface TransactionForm {
-  id: string;
+  transaction_id: string;
   type: "income" | "expense";
   amount: string;
-  category: string;
+  category_id: string;
   description: string;
   date: CalendarDate;
-  paymentMethod: string;
-  recipient: string;
-  tags: string;
+  payment_method: string;
+  source: string;
 }
-
-// Mock function to get transaction by ID
-const getTransactionById = (id: string): TransactionForm | null => {
-  // In a real app, this would fetch from your API
-  const mockTransactions: TransactionForm[] = [
-    {
-      id: "1",
-      type: "expense",
-      amount: "25000",
-      category: "Food",
-      description: "Lunch at restaurant",
-      date: parseDate("2025-06-25"),
-      paymentMethod: "cash",
-      recipient: "Restaurant ABC",
-      tags: "lunch, restaurant",
-    },
-    {
-      id: "2",
-      type: "income",
-      amount: "5000000",
-      category: "Salary",
-      description: "Monthly salary",
-      date: parseDate("2025-06-01"),
-      paymentMethod: "bank_transfer",
-      recipient: "Company XYZ",
-      tags: "salary, monthly",
-    },
-  ];
-
-  return mockTransactions.find((t) => t.id === id) || null;
-};
 
 export default function TransactionUpdatePage() {
   const router = useRouter();
   const params = useParams();
+  const dispatch: AppDispatch = useDispatch();
   const transactionId = params.id as string;
+
+  console.log("URL Params:", params);
+  console.log("Extracted Transaction ID:", transactionId);
+
+  const { token } = useSelector((state: RootState) => state.auth);
+  const { 
+    currentTransaction, 
+    currentTransactionLoading, 
+    currentTransactionError, 
+    loading 
+  } = useSelector((state: RootState) => state.transactions);
+  const { categories: apiCategories } = useSelector((state: RootState) => state.categories);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<TransactionForm>({
-    id: "",
+    transaction_id: "",
     type: "expense",
     amount: "",
-    category: "",
+    category_id: "",
     description: "",
     date: today(getLocalTimeZone()),
-    paymentMethod: "cash",
-    recipient: "",
-    tags: "",
+    payment_method: "cash",
+    source: "",
   });
+
+  // Helper function to get category display name
+  const getCategoryDisplay = (categoryId: string) => {
+    const category = apiCategories.find(cat => cat.category_id === categoryId);
+    return category?.name || categoryId;
+  };
+
+  // Helper function to get category icon
+  const getCategoryIcon = (categoryName: string) => {
+    const cat = categories.find((c) => c.name === categoryName);
+    return cat?.icon || "📄";
+  };
 
   const paymentMethods = [
     { key: "cash", label: "Cash", icon: "💵" },
@@ -100,19 +101,39 @@ export default function TransactionUpdatePage() {
 
   // Load transaction data on component mount
   useEffect(() => {
+    console.log("Transaction ID:", transactionId);
+    console.log("Current Transaction:", currentTransaction);
+    console.log("API Categories length:", apiCategories.length);
+    
+    // Fetch categories if not loaded
+    if (token && apiCategories.length === 0) {
+      console.log("Fetching categories...");
+      dispatch(fetchCategories({
+        token,
+        params: {
+          limit: 100,
+          offset: 1,
+          search: "",
+        },
+      }));
+    }
+    
     const loadTransaction = async () => {
       try {
         setIsDataLoading(true);
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        const transaction = getTransactionById(transactionId);
-
-        if (transaction) {
-          setFormData(transaction);
-        } else {
-          setError("Transaction not found");
+        
+        // Clear any previous transaction data and errors
+        dispatch(clearCurrentTransaction());
+        dispatch(clearCurrentTransactionError());
+        
+        if (!token) {
+          setError("No authentication token");
+          return;
         }
+        
+        // Fetch transaction details from API
+        await dispatch(fetchTransactionById({ token, id: transactionId })).unwrap();
+        
       } catch (err) {
         setError(`Failed to load transaction: ${err}`);
       } finally {
@@ -120,18 +141,68 @@ export default function TransactionUpdatePage() {
       }
     };
 
-    if (transactionId) {
+    // Update form data when currentTransaction is available
+    if (currentTransaction) {
+      console.log("Setting form data from currentTransaction:", currentTransaction);
+      setFormData({
+        transaction_id: currentTransaction.transaction_id,
+        type: currentTransaction.type,
+        amount: currentTransaction.amount.toString(),
+        category_id: currentTransaction.category_id,
+        description: currentTransaction.description,
+        date: parseDate(currentTransaction.transaction_date.split('T')[0]), // Extract date part
+        payment_method: currentTransaction.payment_method || "cash",
+        source: currentTransaction.source || "",
+      });
+      setIsDataLoading(false);
+    }
+
+    // Handle current transaction error
+    if (currentTransactionError) {
+      setError(currentTransactionError);
+      setIsDataLoading(false);
+    }
+
+    if (transactionId && token && !currentTransaction && !currentTransactionLoading) {
       loadTransaction();
     }
-  }, [transactionId]);
+  }, [transactionId, currentTransaction, currentTransactionError, currentTransactionLoading, token, apiCategories.length, dispatch]);
+
+  // Separate effect to monitor categories loading
+  useEffect(() => {
+    console.log("Categories state changed:", {
+      categories: apiCategories,
+      count: apiCategories.length,
+      token: !!token
+    });
+  }, [apiCategories, token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!token) {
+        throw new Error("No authentication token");
+      }
+
+      // Prepare update data
+      const updateData = {
+        type: formData.type,
+        amount: parseFloat(formData.amount),
+        category_id: formData.category_id,
+        description: formData.description,
+        transaction_date: `${formData.date.toString()}T00:00:00Z`,
+        payment_method: formData.payment_method,
+        source: formData.source,
+      };
+
+      await dispatch(updateTransaction({
+        token,
+        id: transactionId,
+        transaction: updateData,
+      })).unwrap();
 
       // Navigate back to transaction list
       router.push("/transaction");
@@ -143,22 +214,49 @@ export default function TransactionUpdatePage() {
   };
 
   const handleInputChange = (field: keyof TransactionForm, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => {
+      const newData = {
+        ...prev,
+        [field]: value,
+      };
+      
+      // If transaction type changes, reset category_id to ensure it's valid for the new type
+      if (field === "type" && value !== prev.type) {
+        console.log("Transaction type changed from", prev.type, "to", value, "- resetting category");
+        newData.category_id = "";
+      }
+      
+      return newData;
+    });
   };
 
-  const filteredCategories = categories.filter((cat) => {
-    if (formData.type === "income") {
-      return cat.name === "Salary" || cat.name === "Gift";
-    }
-
-    return cat.name !== "Salary";
+  const filteredCategories = apiCategories.filter((cat) => {
+    // Filter categories based on transaction type
+    return cat.type === formData.type;
   });
 
+  // Effect to validate selected category when categories or type changes
+  useEffect(() => {
+    if (formData.category_id && apiCategories.length > 0) {
+      const isValidCategory = filteredCategories.some(cat => cat.category_id === formData.category_id);
+      if (!isValidCategory) {
+        console.log("Current category_id", formData.category_id, "is not valid for type", formData.type, "- clearing selection");
+        setFormData(prev => ({
+          ...prev,
+          category_id: ""
+        }));
+      }
+    }
+  }, [formData.type, formData.category_id, apiCategories, filteredCategories]);
+
+  // Debug logging
+  console.log("API Categories:", apiCategories);
+  console.log("Filtered Categories:", filteredCategories);
+  console.log("Current form type:", formData.type);
+  console.log("Current form category_id:", formData.category_id);
+
   // Loading state - use detailed skeleton
-  if (isDataLoading) {
+  if (isDataLoading || currentTransactionLoading) {
     return <Loading />;
   }
 
@@ -244,7 +342,7 @@ export default function TransactionUpdatePage() {
                 <h2 className="text-xl font-semibold">Transaction Details</h2>
                 <div className="ml-auto">
                   <span className="text-sm text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
-                    ID: {formData.id}
+                    ID: {formData.transaction_id}
                   </span>
                 </div>
               </div>
@@ -319,26 +417,65 @@ export default function TransactionUpdatePage() {
                 <Select
                   isRequired
                   label="Category"
-                  placeholder="Select a category"
-                  selectedKeys={formData.category ? [formData.category] : []}
+                  placeholder={
+                    filteredCategories.length > 0 
+                      ? `Select ${formData.type} category` 
+                      : apiCategories.length > 0 
+                        ? `No ${formData.type} categories available`
+                        : "Loading categories..."
+                  }
+                  selectedKeys={formData.category_id ? [formData.category_id] : []}
                   variant="bordered"
+                  isDisabled={filteredCategories.length === 0}
                   onSelectionChange={(keys) => {
                     const selected = Array.from(keys)[0] as string;
-
-                    handleInputChange("category", selected);
+                    console.log("Category selected:", selected);
+                    handleInputChange("category_id", selected);
                   }}
                 >
-                  {filteredCategories.map((category) => (
-                    <SelectItem
-                      key={category.name}
-                      startContent={
-                        <span className="text-lg">{category.icon}</span>
-                      }
-                    >
-                      {category.name}
+                  {filteredCategories.length > 0 ? (
+                    filteredCategories.map((category) => (
+                      <SelectItem
+                        key={category.category_id}
+                        startContent={
+                          <span className="text-lg">{getCategoryIcon(category.name)}</span>
+                        }
+                      >
+                        {category.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem key="no-categories" isDisabled>
+                      No categories available
                     </SelectItem>
-                  ))}
+                  )}
                 </Select>
+                {/* Debug info */}
+                <div className="text-xs text-gray-500 mt-1">
+                  <p>Debug: {filteredCategories.length} {formData.type} categories loaded (total: {apiCategories.length}), current: {formData.category_id}</p>
+                  {filteredCategories.length === 0 && apiCategories.length > 0 && (
+                    <p className="text-orange-500">No {formData.type} categories found!</p>
+                  )}
+                  {filteredCategories.length === 0 && token && (
+                    <Button
+                      size="sm"
+                      variant="light"
+                      onPress={() => {
+                        console.log("Manually fetching categories...");
+                        dispatch(fetchCategories({
+                          token,
+                          params: {
+                            limit: 100,
+                            offset: 1,
+                            search: "",
+                          },
+                        }));
+                      }}
+                    >
+                      Reload Categories
+                    </Button>
+                  )}
+                </div>
               </div>
 
               {/* Date */}
@@ -372,13 +509,12 @@ export default function TransactionUpdatePage() {
                   label="Payment Method"
                   placeholder="Select payment method"
                   selectedKeys={
-                    formData.paymentMethod ? [formData.paymentMethod] : []
+                    formData.payment_method ? [formData.payment_method] : []
                   }
                   variant="bordered"
                   onSelectionChange={(keys) => {
                     const selected = Array.from(keys)[0] as string;
-
-                    handleInputChange("paymentMethod", selected);
+                    handleInputChange("payment_method", selected);
                   }}
                 >
                   {paymentMethods.map((method) => (
@@ -394,23 +530,15 @@ export default function TransactionUpdatePage() {
                 </Select>
               </div>
 
-              {/* Recipient/Payer */}
+              {/* Source */}
               <div>
                 <Input
-                  label={
-                    formData.type === "income"
-                      ? "From (Payer)"
-                      : "To (Recipient)"
-                  }
-                  placeholder={
-                    formData.type === "income"
-                      ? "Who paid you?"
-                      : "Where did you spend?"
-                  }
-                  value={formData.recipient}
+                  label="Source"
+                  placeholder="Transaction source (manual, auto, etc.)"
+                  value={formData.source}
                   variant="bordered"
                   onValueChange={(value) =>
-                    handleInputChange("recipient", value)
+                    handleInputChange("source", value)
                   }
                 />
               </div>
@@ -425,18 +553,6 @@ export default function TransactionUpdatePage() {
                   onValueChange={(value) =>
                     handleInputChange("description", value)
                   }
-                />
-              </div>
-
-              {/* Tags */}
-              <div>
-                <Input
-                  description="Separate multiple tags with commas"
-                  label="Tags"
-                  placeholder="grocery, lunch, work (comma separated)"
-                  value={formData.tags}
-                  variant="bordered"
-                  onValueChange={(value) => handleInputChange("tags", value)}
                 />
               </div>
             </CardBody>
@@ -463,7 +579,7 @@ export default function TransactionUpdatePage() {
         </form>
 
         {/* Changes Preview Card */}
-        {(formData.amount || formData.category) && (
+        {(formData.amount || formData.category_id) && (
           <Card className="mt-6 border-2 border-dashed border-amber-300 dark:border-amber-600 bg-amber-50 dark:bg-amber-950">
             <CardHeader>
               <h3 className="text-lg font-semibold text-amber-700 dark:text-amber-300 flex items-center gap-2">
@@ -500,12 +616,14 @@ export default function TransactionUpdatePage() {
                     </span>
                   </div>
                 )}
-                {formData.category && (
+                {formData.category_id && (
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-400">
                       Category:
                     </span>
-                    <span className="font-medium">{formData.category}</span>
+                    <span className="font-medium">
+                      {getCategoryDisplay(formData.category_id)}
+                    </span>
                   </div>
                 )}
                 {formData.date && (
@@ -518,12 +636,12 @@ export default function TransactionUpdatePage() {
                     </span>
                   </div>
                 )}
-                {formData.recipient && (
+                {formData.source && (
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-400">
-                      {formData.type === "income" ? "From:" : "To:"}
+                      Source:
                     </span>
-                    <span className="font-medium">{formData.recipient}</span>
+                    <span className="font-medium">{formData.source}</span>
                   </div>
                 )}
               </div>

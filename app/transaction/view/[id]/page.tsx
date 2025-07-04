@@ -1,10 +1,10 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Card, CardHeader, CardBody } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Chip } from "@heroui/chip";
 import { Divider } from "@heroui/divider";
-import { parseDate, CalendarDate } from "@internationalized/date";
 import {
   ArrowLeft,
   Edit3,
@@ -22,70 +22,15 @@ import { useRouter, useParams } from "next/navigation";
 import Loading from "./loading";
 import Error from "./error";
 
-import { categories } from "@/dummy/categories";
-
-interface Transaction {
-  id: string;
-  type: "income" | "expense";
-  amount: string;
-  category: string;
-  description: string;
-  date: CalendarDate;
-  paymentMethod: string;
-  recipient: string;
-  tags: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-// Mock function to get transaction by ID
-const getTransactionById = (id: string): Transaction | null => {
-  // In a real app, this would fetch from your API
-  const mockTransactions: Transaction[] = [
-    {
-      id: "1",
-      type: "expense",
-      amount: "25000",
-      category: "Food",
-      description:
-        "Lunch at restaurant with colleagues. Great seafood and service.",
-      date: parseDate("2025-06-25"),
-      paymentMethod: "cash",
-      recipient: "Restaurant ABC",
-      tags: "lunch, restaurant, colleagues",
-      createdAt: "2025-06-25T12:30:00Z",
-      updatedAt: "2025-06-25T12:30:00Z",
-    },
-    {
-      id: "2",
-      type: "income",
-      amount: "5000000",
-      category: "Salary",
-      description: "Monthly salary for June 2025",
-      date: parseDate("2025-06-01"),
-      paymentMethod: "bank_transfer",
-      recipient: "Company XYZ",
-      tags: "salary, monthly, income",
-      createdAt: "2025-06-01T09:00:00Z",
-      updatedAt: "2025-06-01T09:00:00Z",
-    },
-    {
-      id: "3",
-      type: "expense",
-      amount: "150000",
-      category: "Transportation",
-      description: "Monthly public transport pass",
-      date: parseDate("2025-06-20"),
-      paymentMethod: "e_wallet",
-      recipient: "TransJakarta",
-      tags: "transport, monthly, commute",
-      createdAt: "2025-06-20T08:15:00Z",
-      updatedAt: "2025-06-20T08:15:00Z",
-    },
-  ];
-
-  return mockTransactions.find((t) => t.id === id) || null;
-};
+import { RootState, AppDispatch } from "@/lib/redux/store";
+import { 
+  fetchTransactionById, 
+  clearCurrentTransaction, 
+  clearCurrentTransactionError,
+  deleteTransaction,
+  type Transaction
+} from "@/lib/redux/transactionSlice";
+import { fetchCategories } from "@/lib/redux/categorySlice";
 
 const getPaymentMethodDisplay = (method: string) => {
   const methods: Record<
@@ -102,54 +47,61 @@ const getPaymentMethodDisplay = (method: string) => {
   return methods[method] || { label: method, icon: "💰", color: "default" };
 };
 
-const getCategoryInfo = (categoryName: string) => {
-  return (
-    categories.find((cat) => cat.name === categoryName) || {
-      name: categoryName,
-      icon: "📝",
-      color: "#6B7280",
-      description: "Other category",
-    }
-  );
-};
-
 export default function TransactionViewPage() {
   const router = useRouter();
   const params = useParams();
+  const dispatch = useDispatch<AppDispatch>();
   const transactionId = params.id as string;
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [transaction, setTransaction] = useState<Transaction | null>(null);
+  // Redux state
+  const { token } = useSelector((state: RootState) => state.auth);
+  const { 
+    currentTransaction: transaction, 
+    currentTransactionLoading: isLoading, 
+    currentTransactionError: error 
+  } = useSelector((state: RootState) => state.transactions);
+  
+  const { categories } = useSelector((state: RootState) => state.categories);
 
   // Load transaction data on component mount
   useEffect(() => {
-    const loadTransaction = async () => {
-      try {
-        setIsLoading(true);
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        const data = getTransactionById(transactionId);
-
-        if (data) {
-          setTransaction(data);
-        } else {
-          setError("Transaction not found");
-        }
-      } catch (err) {
-        setError(
-          `Failed to load transaction: ${err instanceof Error ? err : "Unknown error"}`,
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (transactionId) {
-      loadTransaction();
+    if (transactionId && token) {
+      dispatch(fetchTransactionById({ token, id: transactionId }));
+      // Also fetch categories for display
+      dispatch(fetchCategories({ 
+        token, 
+        params: { 
+          search: "", 
+          limit: 1000, 
+          offset: 1 
+        } 
+      }));
     }
-  }, [transactionId]);
+
+    // Cleanup on unmount
+    return () => {
+      dispatch(clearCurrentTransaction());
+      dispatch(clearCurrentTransactionError());
+    };
+  }, [dispatch, transactionId, token]);
+
+  const getCategoryInfo = (categoryId: string) => {
+    const category = categories.find((cat) => cat.category_id === categoryId);
+    if (category) {
+      return {
+        name: category.name,
+        icon: "📝", // Default icon since API doesn't have icons
+        color: "#6B7280", // Default color since API doesn't have colors
+        description: category.type,
+      };
+    }
+    return {
+      name: "Unknown Category",
+      icon: "📝",
+      color: "#6B7280",
+      description: "Category not found",
+    };
+  };
 
   const handleCopyId = () => {
     navigator.clipboard.writeText(transactionId);
@@ -160,14 +112,19 @@ export default function TransactionViewPage() {
     router.push(`/transaction/update/${transactionId}`);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     // You could add a confirmation modal here
     if (confirm("Are you sure you want to delete this transaction?")) {
-      // Simulate deletion
-      setTransaction(null);
-      setError(null);
-      router.push("/transaction");
-      // You could add a toast notification here
+      try {
+        if (token) {
+          await dispatch(deleteTransaction({ token, id: transactionId })).unwrap();
+          router.push("/transaction");
+          // You could add a toast notification here
+        }
+      } catch (error) {
+        console.error("Failed to delete transaction:", error);
+        // You could add an error toast notification here
+      }
     }
   };
 
@@ -187,19 +144,26 @@ export default function TransactionViewPage() {
           } as Error
         }
         reset={() => {
-          setError(null);
-          setTransaction(null);
+          dispatch(clearCurrentTransactionError());
+          dispatch(clearCurrentTransaction());
         }}
       />
     );
   }
 
-  const categoryInfo = getCategoryInfo(transaction.category);
-  const paymentInfo = getPaymentMethodDisplay(transaction.paymentMethod);
-  const tagsList = transaction.tags
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter((tag) => tag.length > 0);
+  const categoryInfo = getCategoryInfo(transaction.category_id);
+  const paymentInfo = getPaymentMethodDisplay(transaction.payment_method || transaction.source || "cash");
+  const tagsList = transaction.description
+    ? transaction.description.split(",").map((tag: string) => tag.trim()).filter((tag: string) => tag.length > 0)
+    : [];
+
+  // Format transaction date
+  const transactionDate = new Date(transaction.transaction_date);
+  const formattedDate = transactionDate.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
 
   return (
     <div className="p-6 dark:from-gray-900 dark:to-gray-800">
@@ -279,7 +243,7 @@ export default function TransactionViewPage() {
                         {transaction.type === "income" ? "Income" : "Expense"}
                       </h2>
                       <p className="text-gray-600 dark:text-gray-400">
-                        {transaction.date.toString()}
+                        {formattedDate}
                       </p>
                     </div>
                   </div>
@@ -307,7 +271,7 @@ export default function TransactionViewPage() {
                     }`}
                   >
                     {transaction.type === "income" ? "+" : "-"}Rp{" "}
-                    {parseFloat(transaction.amount).toLocaleString("id-ID")}
+                    {parseFloat(transaction.amount.toString()).toLocaleString("id-ID")}
                   </p>
                 </div>
 
@@ -358,21 +322,6 @@ export default function TransactionViewPage() {
 
               <CardBody className="space-y-4">
                 {/* Recipient/Payer */}
-                {transaction.recipient && (
-                  <div className="flex items-start gap-3">
-                    <MapPin className="text-gray-400 mt-1" size={16} />
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {transaction.type === "income"
-                          ? "From (Payer)"
-                          : "To (Recipient)"}
-                      </p>
-                      <p className="font-medium">{transaction.recipient}</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Description */}
                 {transaction.description && (
                   <div className="flex items-start gap-3">
                     <FileText className="text-gray-400 mt-1" size={16} />
@@ -385,29 +334,69 @@ export default function TransactionViewPage() {
                   </div>
                 )}
 
-                {/* Tags */}
-                {tagsList.length > 0 && (
+                {/* Source */}
+                {transaction.source && (
                   <div className="flex items-start gap-3">
-                    <Tag className="text-gray-400 mt-1" size={16} />
+                    <MapPin className="text-gray-400 mt-1" size={16} />
                     <div className="flex-1">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                        Tags
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Payment Source
                       </p>
-                      <div className="flex flex-wrap gap-2">
-                        {tagsList.map((tag, index) => (
-                          <Chip
-                            key={index}
-                            color="primary"
-                            size="sm"
-                            variant="flat"
-                          >
-                            {tag}
-                          </Chip>
-                        ))}
-                      </div>
+                      <p className="font-medium">{transaction.source}</p>
                     </div>
                   </div>
                 )}
+
+                {/* Auto Categorized Status */}
+                {transaction.is_auto_categorized !== undefined && (
+                  <div className="flex items-start gap-3">
+                    <Tag className="text-gray-400 mt-1" size={16} />
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Categorization
+                      </p>
+                      <Chip
+                        color={transaction.is_auto_categorized ? "warning" : "success"}
+                        size="sm"
+                        variant="flat"
+                      >
+                        {transaction.is_auto_categorized ? "Auto-categorized" : "Manual"}
+                      </Chip>
+                    </div>
+                  </div>
+                )}
+
+                {/* Confirmation Status */}
+                {transaction.confirmed !== undefined && (
+                  <div className="flex items-start gap-3">
+                    <Tag className="text-gray-400 mt-1" size={16} />
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Status
+                      </p>
+                      <Chip
+                        color={transaction.confirmed ? "success" : "warning"}
+                        size="sm"
+                        variant="flat"
+                      >
+                        {transaction.confirmed ? "Confirmed" : "Pending"}
+                      </Chip>
+                    </div>
+                  </div>
+                )}
+
+                {/* Discount */}
+                <div className="flex items-start gap-3">
+                    <Tag className="text-gray-400 mt-1" size={16} />
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Discount
+                      </p>
+                      <p className="font-medium text-green-600">
+                        Rp {parseFloat(transaction.discount.toString()).toLocaleString("id-ID")}
+                      </p>
+                    </div>
+                 </div>
               </CardBody>
             </Card>
           </div>
@@ -422,7 +411,7 @@ export default function TransactionViewPage() {
               <CardBody>
                 <div className="flex items-center gap-2">
                   <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-sm flex-1">
-                    {transaction.id}
+                    {transaction.transaction_id}
                   </code>
                   <Button
                     isIconOnly
@@ -442,23 +431,23 @@ export default function TransactionViewPage() {
                 <h3 className="text-lg font-semibold">Timeline</h3>
               </CardHeader>
               <CardBody className="space-y-3">
-                {transaction.createdAt && (
+                {transaction.created_at && (
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Created
                     </p>
                     <p className="font-medium text-sm">
-                      {new Date(transaction.createdAt).toLocaleString()}
+                      {new Date(transaction.created_at).toLocaleString()}
                     </p>
                   </div>
                 )}
-                {transaction.updatedAt && (
+                {transaction.updated_at && (
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Last Updated
                     </p>
                     <p className="font-medium text-sm">
-                      {new Date(transaction.updatedAt).toLocaleString()}
+                      {new Date(transaction.updated_at).toLocaleString()}
                     </p>
                   </div>
                 )}
@@ -467,7 +456,7 @@ export default function TransactionViewPage() {
                     Transaction Date
                   </p>
                   <p className="font-medium text-sm">
-                    {transaction.date.toString()}
+                    {formattedDate}
                   </p>
                 </div>
               </CardBody>
@@ -493,7 +482,7 @@ export default function TransactionViewPage() {
                   variant="light"
                   onPress={() => {
                     // Duplicate transaction functionality
-                    router.push(`/transaction/add?duplicate=${transaction.id}`);
+                    router.push(`/transaction/add?duplicate=${transaction.transaction_id}`);
                   }}
                 >
                   Duplicate
