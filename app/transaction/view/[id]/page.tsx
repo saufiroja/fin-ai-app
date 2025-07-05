@@ -160,12 +160,6 @@ export default function TransactionViewPage() {
   const paymentInfo = getPaymentMethodDisplay(
     transaction.payment_method || transaction.source || "cash",
   );
-  const tagsList = transaction.description
-    ? transaction.description
-        .split(",")
-        .map((tag: string) => tag.trim())
-        .filter((tag: string) => tag.length > 0)
-    : [];
 
   // Format transaction date
   const transactionDate = new Date(transaction.transaction_date);
