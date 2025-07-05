@@ -46,16 +46,9 @@ import { fetchCategories } from "@/lib/redux/categorySlice";
 export default function TransactionPage() {
   const dispatch: AppDispatch = useDispatch();
   const { token } = useSelector((state: RootState) => state.auth);
-  const {
-    transactions,
-    pagination,
-    overview,
-    loading,
-    overviewLoading,
-    error,
-    overviewError,
-  } = useSelector((state: RootState) => state.transactions);
-  const { categories: apiCategories, loading: categoriesLoading } = useSelector(
+  const { transactions, pagination, overview, loading, error, overviewError } =
+    useSelector((state: RootState) => state.transactions);
+  const { categories: apiCategories } = useSelector(
     (state: RootState) => state.categories,
   );
 
@@ -156,14 +149,10 @@ export default function TransactionPage() {
   const handleDeleteTransaction = async (transactionId: string) => {
     if (!token) return;
 
-    try {
-      await dispatch(deleteTransaction({ token, id: transactionId })).unwrap();
-      // Refresh both transactions and overview data after deletion
-      fetchTransactionsData();
-      fetchOverviewData();
-    } catch (error) {
-      console.error("Failed to delete transaction:", error);
-    }
+    await dispatch(deleteTransaction({ token, id: transactionId })).unwrap();
+    // Refresh both transactions and overview data after deletion
+    fetchTransactionsData();
+    fetchOverviewData();
   };
 
   useEffect(() => {

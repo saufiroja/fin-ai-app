@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-const API_BASE_URL = "https://fin-ai-backend.fin-ai-api.my.id/api/v1";
+const API_BASE_URL = "http://localhost:8000/api/v1";
 
 // Types
 export interface Transaction {
@@ -75,102 +75,6 @@ export interface TransactionState {
   lastFetchParams: TransactionParams | null;
 }
 
-// Mock data for fallback
-const MOCK_TRANSACTIONS: Transaction[] = [
-  {
-    transaction_id: "1",
-    user_id: "user1",
-    category_id: "cat1",
-    type: "expense",
-    description: "Makan siang di restoran",
-    amount: 50000,
-    source: "manual",
-    transaction_date: "2024-01-15T12:00:00Z",
-    ai_category_confidence: 0.85,
-    is_auto_categorized: false,
-    created_at: "2024-01-15T12:00:00Z",
-    updated_at: "2024-01-15T12:00:00Z",
-    confirmed: true,
-    discount: 0,
-    payment_method: "cash",
-  },
-  {
-    transaction_id: "2",
-    user_id: "user1",
-    category_id: "cat2",
-    type: "income",
-    description: "Gaji bulanan",
-    amount: 5000000,
-    source: "manual",
-    transaction_date: "2024-01-01T09:00:00Z",
-    ai_category_confidence: 0.95,
-    is_auto_categorized: false,
-    created_at: "2024-01-01T09:00:00Z",
-    updated_at: "2024-01-01T09:00:00Z",
-    confirmed: true,
-    discount: 0,
-    payment_method: "bank_transfer",
-  },
-  {
-    transaction_id: "3",
-    user_id: "user1",
-    category_id: "cat3",
-    type: "expense",
-    description: "Bensin motor",
-    amount: 25000,
-    source: "manual",
-    transaction_date: "2024-01-14T15:30:00Z",
-    ai_category_confidence: 0.9,
-    is_auto_categorized: true,
-    created_at: "2024-01-14T15:30:00Z",
-    updated_at: "2024-01-14T15:30:00Z",
-    confirmed: true,
-    discount: 0,
-    payment_method: "credit_card",
-  },
-  {
-    transaction_id: "4",
-    user_id: "user1",
-    category_id: "cat4",
-    type: "expense",
-    description: "Listrik bulanan",
-    amount: 150000,
-    source: "manual",
-    transaction_date: "2024-01-10T08:00:00Z",
-    ai_category_confidence: 0.88,
-    is_auto_categorized: false,
-    created_at: "2024-01-10T08:00:00Z",
-    updated_at: "2024-01-10T08:00:00Z",
-    confirmed: true,
-    discount: 0,
-    payment_method: "bank_transfer",
-  },
-  {
-    transaction_id: "5",
-    user_id: "user1",
-    category_id: "cat5",
-    type: "expense",
-    description: "Belanja online",
-    amount: 200000,
-    source: "manual",
-    transaction_date: "2024-01-12T20:15:00Z",
-    ai_category_confidence: 0.75,
-    is_auto_categorized: true,
-    created_at: "2024-01-12T20:15:00Z",
-    updated_at: "2024-01-12T20:15:00Z",
-    confirmed: false,
-    discount: 10000,
-    payment_method: "credit_card",
-  },
-];
-
-// Mock overview data for fallback
-const MOCK_OVERVIEW: OverviewData = {
-  total_income: "Rp 5,000,000",
-  total_expense: "Rp 425,000",
-  total_transactions: "Rp 4,575,000",
-};
-
 // Async thunks
 export const fetchTransactions = createAsyncThunk(
   "transactions/fetchTransactions",
@@ -209,56 +113,9 @@ export const fetchTransactions = createAsyncThunk(
 
       return { data, params };
     } catch (error: any) {
-      console.log("API not available, using mock data", error.message);
-
-      // Return mock data with the same structure as API
-      let filteredTransactions = [...MOCK_TRANSACTIONS];
-
-      // Apply client-side filtering for mock data
-      if (params.category_id) {
-        filteredTransactions = filteredTransactions.filter(
-          (t) => t.category_id === params.category_id,
-        );
-      }
-
-      if (params.search) {
-        filteredTransactions = filteredTransactions.filter((t) =>
-          t.description.toLowerCase().includes(params.search!.toLowerCase()),
-        );
-      }
-
-      if (params.startDate && params.endDate) {
-        const start = new Date(params.startDate);
-        const end = new Date(params.endDate);
-
-        filteredTransactions = filteredTransactions.filter((t) => {
-          const date = new Date(t.transaction_date);
-
-          return date >= start && date <= end;
-        });
-      }
-
-      // Apply pagination
-      const limit = params.limit || 10;
-      const offset = params.offset || 1;
-      const startIdx = (offset - 1) * limit;
-      const paginatedTransactions = filteredTransactions.slice(
-        startIdx,
-        startIdx + limit,
-      );
-
-      const mockResponse: TransactionResponse = {
-        status: 200,
-        message: "Mock transactions retrieved successfully",
-        data: paginatedTransactions,
-        pagination: {
-          total: filteredTransactions.length,
-          current_page: offset,
-          total_pages: Math.ceil(filteredTransactions.length / limit),
-        },
-      };
-
-      return { data: mockResponse, params };
+      return rejectWithValue({
+        message: error.message || "Failed to fetch transactions",
+      });
     }
   },
 );
@@ -302,35 +159,37 @@ export const fetchOverview = createAsyncThunk(
 
       return data.data;
     } catch (error: any) {
-      console.log("API not available, using mock overview data", error.message);
-
-      // Return mock data with the same structure as API
-      return MOCK_OVERVIEW;
+      return rejectWithValue({
+        message: error.message || "Failed to fetch overview",
+      });
     }
   },
 );
 
 export const createTransaction = createAsyncThunk(
   "transactions/createTransaction",
-  async ({
-    token,
-    transaction,
-  }: {
-    token: string;
-    transaction: {
-      category_id: string;
-      type: "expense" | "income";
-      description: string;
-      amount: number;
-      source: string;
-      transaction_date: string;
-      ai_category_confidence: number;
-      is_auto_categorized: boolean;
-      confirmed: boolean;
-      discount: number;
-      payment_method: string;
-    };
-  }) => {
+  async (
+    {
+      token,
+      transaction,
+    }: {
+      token: string;
+      transaction: {
+        category_id: string;
+        type: "expense" | "income";
+        description: string;
+        amount: number;
+        source: string;
+        transaction_date: string;
+        ai_category_confidence: number;
+        is_auto_categorized: boolean;
+        confirmed: boolean;
+        discount: number;
+        payment_method: string;
+      };
+    },
+    { rejectWithValue },
+  ) => {
     try {
       const response = await fetch(`${API_BASE_URL}/transactions`, {
         method: "POST",
@@ -349,22 +208,9 @@ export const createTransaction = createAsyncThunk(
 
       return data;
     } catch (error: any) {
-      // Mock success for development
-      console.log("API not available, using mock creation");
-
-      const mockTransaction: Transaction = {
-        ...transaction,
-        transaction_id: Date.now().toString(), // Mock ID
-        user_id: "user1",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      return {
-        status: 201,
-        message: "Transaction created successfully",
-        data: mockTransaction,
-      } as SingleTransactionResponse;
+      return rejectWithValue({
+        message: error.message || "Failed to create transaction",
+      });
     }
   },
 );
@@ -397,14 +243,9 @@ export const updateTransaction = createAsyncThunk(
 
       return data;
     } catch (error: any) {
-      // Mock success for development
-      console.log("API not available, using mock update");
-
-      return {
-        status: 200,
-        message: "Transaction updated successfully",
-        data: { id, ...transaction },
-      };
+      return rejectWithValue({
+        message: error.message || "Failed to update transaction",
+      });
     }
   },
 );
@@ -429,14 +270,9 @@ export const deleteTransaction = createAsyncThunk(
 
       return { ...data, id };
     } catch (error: any) {
-      // Mock success for development
-      console.log("API not available, using mock deletion");
-
-      return {
-        status: 200,
-        message: "Transaction deleted successfully",
-        id,
-      };
+      return rejectWithValue({
+        message: error.message || "Failed to delete transaction",
+      });
     }
   },
 );
@@ -461,21 +297,9 @@ export const fetchTransactionById = createAsyncThunk(
 
       return data.data;
     } catch (error: any) {
-      console.log(
-        "API not available, using mock transaction data",
-        error.message,
-      );
-
-      // Find transaction in mock data
-      const mockTransaction = MOCK_TRANSACTIONS.find(
-        (t) => t.transaction_id === id,
-      );
-
-      if (mockTransaction) {
-        return mockTransaction;
-      } else {
-        throw new Error("Transaction not found");
-      }
+      return rejectWithValue({
+        message: error.message || "Failed to fetch transaction details",
+      });
     }
   },
 );

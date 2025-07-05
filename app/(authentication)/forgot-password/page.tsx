@@ -37,11 +37,9 @@ export default function ForgotPasswordPage() {
     // Simulate API call
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      console.log("Reset password request for:", email);
       setIsEmailSent(true);
       // Add your forgot password logic here
     } catch (error) {
-      console.error("Reset password error:", error);
       setError("Failed to send reset email. Please try again.");
     } finally {
       setIsLoading(false);
@@ -53,7 +51,6 @@ export default function ForgotPasswordPage() {
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("Resending reset email to:", email);
       // Add resend logic here
     } finally {
       setIsLoading(false);

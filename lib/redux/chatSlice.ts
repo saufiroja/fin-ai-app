@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 
-const API_BASE_URL = "https://fin-ai-backend.fin-ai-api.my.id/api/v1";
+const API_BASE_URL = "http://localhost:8000/api/v1";
+
 // Types
 export interface ChatSession {
   id: string;
@@ -30,62 +31,6 @@ interface ChatState {
   isTyping: boolean;
 }
 
-// Mock chat data
-const MOCK_SESSIONS: ChatSession[] = [
-  {
-    id: "1",
-    title: "Investment Planning",
-    created_at: "2024-01-01T10:00:00Z",
-    updated_at: "2024-01-01T10:00:00Z",
-    archived: false,
-  },
-  {
-    id: "2",
-    title: "Budget Analysis",
-    created_at: "2024-01-02T10:00:00Z",
-    updated_at: "2024-01-02T10:00:00Z",
-    archived: false,
-  },
-  {
-    id: "3",
-    title: "Tax Planning",
-    created_at: "2024-01-03T10:00:00Z",
-    updated_at: "2024-01-03T10:00:00Z",
-    archived: false,
-  },
-];
-
-const MOCK_MESSAGES: Record<string, ChatMessage[]> = {
-  "1": [
-    {
-      id: "msg1",
-      text: "Hello! I'd like help with investment planning.",
-      sender: "user",
-      timestamp: "2024-01-01T10:00:00Z",
-    },
-    {
-      id: "msg2",
-      text: "I'd be happy to help you with investment planning! What's your current financial situation and investment goals?",
-      sender: "bot",
-      timestamp: "2024-01-01T10:01:00Z",
-    },
-  ],
-  "2": [
-    {
-      id: "msg3",
-      text: "Can you help me analyze my monthly budget?",
-      sender: "user",
-      timestamp: "2024-01-02T10:00:00Z",
-    },
-    {
-      id: "msg4",
-      text: "Of course! Please share your monthly income and expenses so I can help you analyze your budget.",
-      sender: "bot",
-      timestamp: "2024-01-02T10:01:00Z",
-    },
-  ],
-};
-
 const initialState: ChatState = {
   sessions: [],
   messages: {},
@@ -104,7 +49,6 @@ export const createChatSession = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      // Try to connect to real API first
       const response = await fetch(`${API_BASE_URL}/chat/sessions`, {
         method: "POST",
         headers: {
@@ -133,22 +77,9 @@ export const createChatSession = createAsyncThunk(
 
       return transformedSession;
     } catch (error: any) {
-      // If API is not available, use mock data
-      console.log("API not available, using mock chat sessions");
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Create mock session
-      const mockSession: ChatSession = {
-        id: Date.now().toString(),
-        title,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        archived: false,
-      };
-
-      return mockSession;
+      return rejectWithValue({
+        message: error.message || "Failed to create chat session",
+      });
     }
   },
 );
@@ -157,7 +88,6 @@ export const fetchChatSessions = createAsyncThunk(
   "chat/fetchSessions",
   async (token: string, { rejectWithValue }) => {
     try {
-      // Try to connect to real API first
       const response = await fetch(`${API_BASE_URL}/chat/sessions`, {
         method: "GET",
         headers: {
@@ -185,13 +115,9 @@ export const fetchChatSessions = createAsyncThunk(
 
       return transformedSessions;
     } catch (error: any) {
-      // If API is not available, use mock data
-      console.log("API not available, using mock chat sessions");
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      return MOCK_SESSIONS;
+      return rejectWithValue({
+        message: error.message || "Failed to fetch chat sessions",
+      });
     }
   },
 );
@@ -207,7 +133,6 @@ export const renameChatSession = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      // Try to connect to real API first
       const response = await fetch(
         `${API_BASE_URL}/chat/sessions/rename/${sessionId}`,
         {
@@ -243,13 +168,9 @@ export const renameChatSession = createAsyncThunk(
           : null,
       };
     } catch (error: any) {
-      // If API is not available, use mock data
-      console.log("API not available, using mock rename");
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      return { sessionId, newTitle, updatedSession: null };
+      return rejectWithValue({
+        message: error.message || "Failed to rename chat session",
+      });
     }
   },
 );
@@ -261,7 +182,6 @@ export const deleteChatSession = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      // Try to connect to real API first
       const response = await fetch(
         `${API_BASE_URL}/chat/sessions/${sessionId}`,
         {
@@ -281,13 +201,9 @@ export const deleteChatSession = createAsyncThunk(
 
       return sessionId;
     } catch (error: any) {
-      // If API is not available, use mock deletion
-      console.log("API not available, using mock deletion");
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      return sessionId;
+      return rejectWithValue({
+        message: error.message || "Failed to delete chat session",
+      });
     }
   },
 );
@@ -310,23 +226,13 @@ export const sendChatMessage = createAsyncThunk(
     },
     { rejectWithValue },
   ) => {
-    console.log("SendChatMessage called with:", {
-      chatSessionId,
-      message: message.substring(0, 50) + "...",
-      mode,
-      hasToken: !!token,
-    });
-
     try {
-      // Try to connect to real API first
       const requestBody = {
         chat_session_id: chatSessionId,
         model_id: modelId,
         mode: mode,
         message: message,
       };
-
-      console.log("API Request body:", requestBody);
 
       const response = await fetch(`${API_BASE_URL}/chat/sessions/send`, {
         method: "POST",
@@ -337,14 +243,9 @@ export const sendChatMessage = createAsyncThunk(
         body: JSON.stringify(requestBody),
       });
 
-      console.log("API Response status:", response.status);
       const apiResponse = await response.json();
 
-      console.log("API Response:", apiResponse);
-
       if (!response.ok) {
-        console.error("API Error:", apiResponse);
-
         return rejectWithValue(apiResponse);
       }
 
@@ -365,36 +266,9 @@ export const sendChatMessage = createAsyncThunk(
         messageId: apiResponse.data.chat_message_id,
       };
     } catch (error: any) {
-      // If API is not available, use mock response
-      console.log("API error occurred:", error.message);
-      console.log("Using mock chat response as fallback");
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Create mock response
-      const mockMessages: ChatMessage[] = [
-        {
-          id: `user_${Date.now()}`,
-          text: message,
-          sender: "user",
-          timestamp: new Date().toISOString(),
-        },
-        {
-          id: `bot_${Date.now()}`,
-          text: `I understand you're asking about: "${message}". This is a simulated response. Please connect to a real AI service for actual financial advice.`,
-          sender: "bot",
-          timestamp: new Date().toISOString(),
-        },
-      ];
-
-      console.log("Mock response created:", mockMessages);
-
-      return {
-        sessionId: chatSessionId,
-        messages: mockMessages,
-        messageId: `mock_${Date.now()}`,
-      };
+      return rejectWithValue({
+        message: error.message || "Failed to send chat message",
+      });
     }
   },
 );
@@ -406,7 +280,6 @@ export const fetchChatSessionDetails = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      // Try to connect to real API first
       const response = await fetch(
         `${API_BASE_URL}/chat/sessions/${sessionId}`,
         {
@@ -437,14 +310,9 @@ export const fetchChatSessionDetails = createAsyncThunk(
         messages,
       };
     } catch (error: any) {
-      // If API is not available, check localStorage first
-      console.log("API not available, using stored messages");
-
-      // Return empty messages or stored messages
-      return {
-        sessionId,
-        messages: [], // Will fall back to localStorage in the component
-      };
+      return rejectWithValue({
+        message: error.message || "Failed to fetch session details",
+      });
     }
   },
 );
@@ -518,11 +386,6 @@ const chatSlice = createSlice({
 
         if (stored) {
           state.messages = JSON.parse(stored);
-        }
-
-        // Load mock messages if no stored messages
-        if (Object.keys(state.messages).length === 0) {
-          state.messages = MOCK_MESSAGES;
         }
       }
     },

@@ -26,7 +26,7 @@ export default function RegisterPage() {
   const dispatch: AppDispatch = useDispatch();
   const router = useRouter();
 
-  const { loading, error, registrationSuccess } = useSelector(
+  const { loading, registrationSuccess } = useSelector(
     (state: RootState) => state.auth,
   );
   const [errors, setErrors] = useState<{ [key: string]: string }>({});

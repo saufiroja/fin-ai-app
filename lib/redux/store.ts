@@ -5,6 +5,7 @@ import userReducer from "./userSlice";
 import transactionReducer from "./transactionSlice";
 import categoryReducer from "./categorySlice";
 import chatReducer from "./chatSlice";
+import receiptReducer from "./receiptSlice";
 
 export const store = configureStore({
   reducer: {
@@ -13,6 +14,7 @@ export const store = configureStore({
     transactions: transactionReducer,
     categories: categoryReducer,
     chat: chatReducer,
+    receipt: receiptReducer,
   },
 });
 

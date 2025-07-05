@@ -115,7 +115,6 @@ export default function VerifyOTPPage() {
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      console.log("Verifying OTP:", otpString, "for email:", email);
 
       // On success, redirect to reset password page
       if (otpString === "111111") {
@@ -124,7 +123,6 @@ export default function VerifyOTPPage() {
 
       // Add your OTP verification logic here
     } catch (error) {
-      console.error("OTP verification error:", error);
       setError("Invalid OTP. Please try again.");
     } finally {
       setIsLoading(false);
@@ -138,15 +136,13 @@ export default function VerifyOTPPage() {
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("Resending OTP to:", email);
       setTimeLeft(300); // Reset timer to 5 minutes
       setOtp(["", "", "", "", "", ""]); // Clear current OTP
       inputRefs.current[0]?.focus(); // Focus first input
 
       // Add your resend OTP logic here
     } catch (error) {
-      console.error("Resend OTP error:", error);
-      setError("Failed to resend OTP. Please try again.");
+      setError(`Failed to resend OTP. Please try again.`);
     } finally {
       setIsResending(false);
     }

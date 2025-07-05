@@ -20,6 +20,10 @@ export const siteConfig = {
       label: "Insight",
       href: "/insight",
     },
+    {
+      label: "Receipt",
+      href: "/receipt",
+    },
   ],
   navMenuItems: [
     {
@@ -45,6 +49,10 @@ export const siteConfig = {
     {
       label: "Setting",
       href: "/setting",
+    },
+    {
+      label: "Receipt",
+      href: "/receipt",
     },
   ],
   links: {

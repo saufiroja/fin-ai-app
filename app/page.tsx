@@ -18,9 +18,7 @@ import { AppDispatch, RootState } from "@/lib/redux/store";
 
 export default function Home() {
   const dispatch: AppDispatch = useDispatch();
-  const { user: authUser, token } = useSelector(
-    (state: RootState) => state.auth,
-  );
+  const { token } = useSelector((state: RootState) => state.auth);
   const { currentUser } = useSelector((state: RootState) => state.user);
 
   const subtitles = [
@@ -42,19 +40,28 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
+  // Check for tab parameter in URL on mount
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const tabParam = searchParams.get("tab");
+
+    if (tabParam === "scan") {
+      setActiveTab("scan");
+      // Clean up the URL parameter
+      const url = new URL(window.location.href);
+
+      url.searchParams.delete("tab");
+      window.history.replaceState({}, "", url.pathname);
+    }
+  }, []);
+
   useEffect(() => {
     setRandomSubtitle(subtitles[Math.floor(Math.random() * subtitles.length)]);
   }, []);
 
   // Fetch user data when component mounts and token is available
   useEffect(() => {
-    console.log("Checking user data...", {
-      token: !!token,
-      currentUser,
-      hasFullName: !!currentUser?.full_name,
-    });
     if (token && (!currentUser || !currentUser.full_name)) {
-      console.log("Dispatching getUserMe...");
       dispatch(getUserMe(token));
     }
   }, [token, currentUser, dispatch]);
@@ -213,7 +220,7 @@ export default function Home() {
                           icon="lucide:scan-line"
                         />
                       </div>
-                      <span className="font-medium">Scan Struk</span>
+                      <span className="font-medium">Scan Receipt</span>
                     </div>
                   }
                 />

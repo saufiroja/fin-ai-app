@@ -90,7 +90,6 @@ export default function TransactionForm({
     currentTransaction,
     currentTransactionLoading,
     currentTransactionError,
-    loading,
   } = useSelector((state: RootState) => state.transactions);
   const { categories: apiCategories, loading: categoriesLoading } = useSelector(
     (state: RootState) => state.categories,

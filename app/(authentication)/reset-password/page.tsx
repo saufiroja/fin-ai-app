@@ -114,7 +114,6 @@ export default function ResetPasswordPage() {
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      console.log("Reset password for:", email, "with token:", token);
 
       // Clear stored email
       localStorage.removeItem("resetEmail");
@@ -124,7 +123,6 @@ export default function ResetPasswordPage() {
 
       // Add your password reset logic here
     } catch (error) {
-      console.error("Password reset error:", error);
       setErrors({ general: "Failed to reset password. Please try again." });
     } finally {
       setIsLoading(false);

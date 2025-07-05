@@ -3,34 +3,7 @@ import Cookies from "js-cookie";
 
 import { AuthState } from "@/types";
 
-const API_BASE_URL = "https://fin-ai-backend.fin-ai-api.my.id/api/v1";
-// Mock user data
-const MOCK_USERS = [
-  {
-    id: 1,
-    name: "Andi Pratama",
-    full_name: "Andi Pratama Kusuma",
-    email: "andi@example.com",
-    password: "password123",
-    avatar: "A",
-  },
-  {
-    id: 2,
-    name: "Budi Santoso",
-    full_name: "Budi Santoso Rahman",
-    email: "budi@example.com",
-    password: "password123",
-    avatar: "B",
-  },
-  {
-    id: 3,
-    name: "Citra Dewi",
-    full_name: "Citra Dewi Maharani",
-    email: "citra@example.com",
-    password: "password123",
-    avatar: "C",
-  },
-];
+const API_BASE_URL = "http://localhost:8000/api/v1";
 
 export const loginUser = createAsyncThunk(
   "auth/login",
@@ -53,45 +26,10 @@ export const loginUser = createAsyncThunk(
 
       return data;
     } catch (error: any) {
-      // If API is not available, use mock authentication
-      console.log("API not available, using mock authentication");
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Find mock user
-      const mockUser = MOCK_USERS.find(
-        (user) =>
-          user.email === credentials.email &&
-          user.password === credentials.password,
+      return rejectWithValue(
+        error.message ||
+          "Failed to connect to the server. Please try again later.",
       );
-
-      if (!mockUser) {
-        return rejectWithValue({
-          message: "Invalid email or password",
-          status: 401,
-        });
-      }
-
-      // Generate mock token
-      const mockToken = `mock_token_${mockUser.id}_${Date.now()}`;
-
-      Cookies.set("access_token", mockToken);
-
-      // Return mock response in the same format as real API
-      return {
-        message: "Login successful",
-        data: {
-          access_token: mockToken,
-        },
-        user: {
-          id: mockUser.id,
-          name: mockUser.name,
-          full_name: mockUser.full_name,
-          email: mockUser.email,
-          avatar: mockUser.avatar,
-        },
-      };
     }
   },
 );

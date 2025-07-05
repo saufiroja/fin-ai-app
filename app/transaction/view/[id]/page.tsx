@@ -118,17 +118,12 @@ export default function TransactionViewPage() {
   const handleDelete = async () => {
     // You could add a confirmation modal here
     if (confirm("Are you sure you want to delete this transaction?")) {
-      try {
-        if (token) {
-          await dispatch(
-            deleteTransaction({ token, id: transactionId }),
-          ).unwrap();
-          router.push("/transaction");
-          // You could add a toast notification here
-        }
-      } catch (error) {
-        console.error("Failed to delete transaction:", error);
-        // You could add an error toast notification here
+      if (token) {
+        await dispatch(
+          deleteTransaction({ token, id: transactionId }),
+        ).unwrap();
+        router.push("/transaction");
+        // You could add a toast notification here
       }
     }
   };

@@ -2,32 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 import { User } from "@/types";
 
-const API_BASE_URL = "https://fin-ai-backend.fin-ai-api.my.id/api/v1";
-
-// Mock user data
-const MOCK_USERS = [
-  {
-    id: 1,
-    name: "Andi Pratama",
-    full_name: "Andi Pratama Kusuma",
-    email: "andi@example.com",
-    avatar: "A",
-  },
-  {
-    id: 2,
-    name: "Budi Santoso",
-    full_name: "Budi Santoso Rahman",
-    email: "budi@example.com",
-    avatar: "B",
-  },
-  {
-    id: 3,
-    name: "Citra Dewi",
-    full_name: "Citra Dewi Maharani",
-    email: "citra@example.com",
-    avatar: "C",
-  },
-];
+const API_BASE_URL = "http://localhost:8000/api/v1";
 
 export interface UserState {
   currentUser: User | null;
@@ -39,7 +14,6 @@ export const getUserMe = createAsyncThunk(
   "user/getUserMe",
   async (token: string, { rejectWithValue }) => {
     try {
-      // Try to connect to real API first
       const response = await fetch(`${API_BASE_URL}/user/me`, {
         method: "GET",
         headers: {
@@ -55,37 +29,9 @@ export const getUserMe = createAsyncThunk(
 
       return data;
     } catch (error: any) {
-      // If API is not available, use mock user data
-      console.log("API not available, using mock user data");
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      let mockUser;
-
-      if (token && token.startsWith("mock_token_")) {
-        // Extract user ID from mock token format: mock_token_{userId}_{timestamp}
-        const userId = parseInt(token.split("_")[2]);
-
-        mockUser = MOCK_USERS.find((user) => user.id === userId);
-      }
-
-      // Fallback to first mock user if token parsing fails
-      if (!mockUser) {
-        mockUser = MOCK_USERS[0];
-      }
-
-      // Return mock response in the same format as real API
-      return {
-        message: "User data retrieved successfully",
-        data: {
-          id: mockUser.id,
-          full_name: mockUser.full_name,
-          name: mockUser.name,
-          email: mockUser.email,
-          avatar: mockUser.avatar,
-        },
-      };
+      return rejectWithValue({
+        message: error.message || "Failed to fetch user data",
+      });
     }
   },
 );
@@ -113,18 +59,9 @@ export const updateUserProfile = createAsyncThunk(
 
       return data;
     } catch (error: any) {
-      // Mock update for development
-      console.log("API not available, using mock profile update");
-
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      return {
-        message: "Profile updated successfully",
-        data: {
-          ...profileData,
-          id: 1, // Mock ID
-        },
-      };
+      return rejectWithValue({
+        message: error.message || "Failed to update profile",
+      });
     }
   },
 );
@@ -151,12 +88,10 @@ const userSlice = createSlice({
     builder
       // Get User Me
       .addCase(getUserMe.pending, (state) => {
-        console.log("getUserMe.pending");
         state.loading = true;
         state.error = null;
       })
       .addCase(getUserMe.fulfilled, (state, action) => {
-        console.log("getUserMe.fulfilled", action.payload);
         state.loading = false;
         state.currentUser = {
           id: action.payload.data.id,
@@ -167,7 +102,6 @@ const userSlice = createSlice({
         };
       })
       .addCase(getUserMe.rejected, (state, action) => {
-        console.log("getUserMe.rejected", action.payload);
         state.loading = false;
         state.error = action.payload as string;
       })

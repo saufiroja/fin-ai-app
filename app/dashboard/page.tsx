@@ -1,5 +1,4 @@
 "use client";
-import { Card, CardBody } from "@heroui/card";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -17,14 +16,9 @@ export default function DashboardPage() {
 
   // Redux state
   const { token } = useSelector((state: RootState) => state.auth);
-  const {
-    transactions,
-    overview,
-    loading,
-    overviewLoading,
-    error,
-    overviewError,
-  } = useSelector((state: RootState) => state.transactions);
+  const { transactions, overview, loading, error, overviewError } = useSelector(
+    (state: RootState) => state.transactions,
+  );
 
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
@@ -45,42 +39,32 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadDashboardData = async () => {
       if (!token) return;
+      setIsInitialLoading(true);
 
-      try {
-        setIsInitialLoading(true);
+      const { startDate, endDate } = getLastWeekDateRange();
 
-        const { startDate, endDate } = getLastWeekDateRange();
+      dispatch(
+        fetchOverview({
+          token,
+          params: {
+            startDate,
+            endDate,
+          },
+        }),
+      );
 
-        console.log("Fetching data for:", { startDate, endDate });
-
-        // Fetch overview data for last week
-        dispatch(
-          fetchOverview({
-            token,
-            params: {
-              startDate,
-              endDate,
-            },
-          }),
-        );
-
-        // Fetch recent transactions for last week (limit to 10 most recent)
-        dispatch(
-          fetchTransactions({
-            token,
-            params: {
-              limit: 10,
-              offset: 1,
-              startDate,
-              endDate,
-            },
-          }),
-        );
-      } catch (error) {
-        console.error("Error loading dashboard data:", error);
-      } finally {
-        setIsInitialLoading(false);
-      }
+      dispatch(
+        fetchTransactions({
+          token,
+          params: {
+            limit: 10,
+            offset: 1,
+            startDate,
+            endDate,
+          },
+        }),
+      );
+      setIsInitialLoading(false);
     };
 
     loadDashboardData();
@@ -178,43 +162,129 @@ export default function DashboardPage() {
             See all transaction
           </button>
         </div>
-        <Card>
-          <CardBody>
-            {transactions.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="text-gray-400 text-sm">
-                  No transactions in the last 7 days
-                </div>
+        <div className="bg-white dark:bg-neutral-950 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+          {!transactions || transactions.length === 0 ? (
+            <div className="text-center py-16 px-6">
+              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 rounded-full flex items-center justify-center">
+                <span className="text-2xl">💳</span>
               </div>
-            ) : (
-              <ul className="divide-y divide-gray-200">
-                {transactions.map((item) => (
-                  <li
-                    key={item.transaction_id}
-                    className="py-2 flex justify-between items-center"
-                  >
-                    <div>
-                      <span>{item.description}</span>
-                      <div className="text-xs text-gray-400">
-                        {formatTransactionDate(item.transaction_date)}
+              <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Belum ada transaksi
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                Mulai tambahkan transaksi pertama Anda
+              </p>
+              <button
+                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105"
+                onClick={() => router.push("/transaction/add")}
+              >
+                + Tambah Transaksi
+              </button>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-100 dark:divide-gray-800">
+              {transactions.map((item, _index) => (
+                <div
+                  key={item.transaction_id}
+                  className="group relative p-5 transition-all duration-300 ease-out hover:bg-gradient-to-r hover:from-gray-50 hover:via-blue-50 hover:to-purple-50 dark:hover:from-gray-800 dark:hover:via-gray-700 dark:hover:to-gray-800 cursor-pointer transform hover:-translate-y-0.5 hover:shadow-lg"
+                  role="button"
+                  onClick={() =>
+                    router.push(`/transaction/view/${item.transaction_id}`)
+                  }
+                >
+                  <div className="flex items-center space-x-4">
+                    {/* Transaction Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200 truncate">
+                            {item.description}
+                          </h4>
+                          <div className="flex items-center space-x-3 mt-2">
+                            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                              {formatTransactionDate(item.transaction_date)}
+                            </span>
+                            <div
+                              className={`
+                              inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
+                              transition-all duration-200 group-hover:scale-105
+                              ${
+                                item.type === "income"
+                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
+                                  : "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300"
+                              }
+                            `}
+                            >
+                              <div
+                                className={`
+                                w-1.5 h-1.5 rounded-full mr-1.5
+                                ${item.type === "income" ? "bg-emerald-500" : "bg-rose-500"}
+                              `}
+                              />
+                              {item.type === "income"
+                                ? "Pemasukan"
+                                : "Pengeluaran"}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Amount with Modern Styling */}
+                        <div className="text-right ml-4">
+                          <div
+                            className={`
+                            font-bold text-xl transition-all duration-200 group-hover:scale-105
+                            ${
+                              item.type === "income"
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : "text-rose-600 dark:text-rose-400"
+                            }
+                          `}
+                          >
+                            {item.type === "income" ? "+" : "-"}Rp{" "}
+                            {item.amount.toLocaleString("id-ID")}
+                          </div>
+
+                          {/* Modern hover indicator */}
+                          <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-y-1 group-hover:translate-y-0">
+                            <div className="inline-flex items-center text-xs text-blue-500 dark:text-blue-400 font-medium mt-1 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-md">
+                              <span>Lihat detail</span>
+                              <svg
+                                className="w-3 h-3 ml-1"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  d="M9 5l7 7-7 7"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <span
-                      className={
-                        item.type === "income"
-                          ? "text-green-600"
-                          : "text-red-600"
-                      }
-                    >
-                      {item.type === "income" ? "+" : "-"}Rp{" "}
-                      {item.amount.toLocaleString("id-ID")}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardBody>
-        </Card>
+                  </div>
+
+                  {/* Modern accent border */}
+                  <div
+                    className={`
+                    absolute left-0 top-0 bottom-0 w-1 transition-all duration-300
+                    ${
+                      item.type === "income"
+                        ? "bg-gradient-to-b from-emerald-400 to-green-500"
+                        : "bg-gradient-to-b from-rose-400 to-red-500"
+                    }
+                    opacity-0 group-hover:opacity-100 transform scale-y-0 group-hover:scale-y-100
+                  `}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

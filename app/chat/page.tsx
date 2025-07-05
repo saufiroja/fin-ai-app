@@ -73,8 +73,6 @@ export default function ChatPage() {
     sessions: chatHistory,
     messages: chatMessagesById,
     selectedSessionId,
-    selectedSession,
-    loading: isLoading,
     error,
     isTyping,
   } = useSelector((state: RootState) => state.chat);
@@ -110,12 +108,9 @@ export default function ChatPage() {
               await dispatch(
                 fetchChatSessionDetails({ token, sessionId: lastId }),
               );
-              console.log("Last selected session details loaded");
             } catch (error) {
-              console.error(
-                "Error fetching last selected session details:",
-                error,
-              );
+              // Handle error silently or show user-friendly message
+              // Could be replaced with toast notification
             } finally {
               setIsFetchingSessionDetails(false);
             }
@@ -123,7 +118,7 @@ export default function ChatPage() {
         }
       } else {
         // If no token, we can still load from localStorage or show empty state
-        console.log("No token available, using mock data only");
+        // Handle no token state gracefully
       }
       setIsInitialLoading(false);
     };
@@ -134,26 +129,18 @@ export default function ChatPage() {
   // Show error notification
   useEffect(() => {
     if (error) {
-      console.error("Chat error:", error);
-      // You can add toast notification here
+      // Handle error properly - could be replaced with toast notification
+      // For now, we'll clear the error silently
       dispatch(clearError());
     }
   }, [error, dispatch]);
 
   const handleSendMessage = async () => {
-    console.log("HandleSendMessage called with:", {
-      hasMessage: !!newMessage.trim(),
-      isSendingMessage,
-      hasToken: !!token,
-      selectedSessionId,
-    });
-
     if (newMessage.trim() && !isSendingMessage && token) {
       let sessionId = selectedSessionId;
 
       // If no session is selected, create a new one first
       if (!sessionId) {
-        console.log("No session selected, creating new session...");
         setIsCreatingSession(true);
         try {
           const result = await dispatch(
@@ -163,18 +150,14 @@ export default function ChatPage() {
           if (createChatSession.fulfilled.match(result)) {
             // Get the session ID from the created session
             sessionId = result.payload.id;
-            console.log(
-              "New chat session created successfully:",
-              result.payload,
-            );
           } else {
-            console.error("Failed to create chat session:", result.error);
+            // Handle failed session creation
             setIsCreatingSession(false);
 
             return;
           }
         } catch (error) {
-          console.error("Error creating new chat:", error);
+          // Handle error creating new chat
           setIsCreatingSession(false);
 
           return;
@@ -184,12 +167,10 @@ export default function ChatPage() {
 
       // Make sure we have a valid session ID
       if (!sessionId) {
-        console.error("No session ID available");
-
+        // Handle missing session ID
         return;
       }
 
-      console.log("Sending message to session:", sessionId);
       setIsSendingMessage(true);
 
       try {
@@ -223,37 +204,25 @@ export default function ChatPage() {
 
         // Check if the message was sent successfully
         if (sendChatMessage.fulfilled.match(result)) {
-          console.log("Message sent successfully:", result.payload);
-
           // After successful send, fetch the latest session details to get updated messages
           setIsFetchingSessionDetails(true);
           try {
             await dispatch(fetchChatSessionDetails({ token, sessionId }));
-            console.log("Session details refreshed after sending message");
           } catch (error) {
-            console.error("Error refreshing session details:", error);
+            // Handle error refreshing session details
           } finally {
             setIsFetchingSessionDetails(false);
             dispatch(setTyping(false)); // Stop typing indicator after fetching
           }
         } else {
-          console.error("Failed to send message:", result.error);
+          // Handle failed message send
           dispatch(setTyping(false)); // Stop typing indicator on error
         }
       } catch (error) {
-        console.error("Error sending message:", error);
+        // Handle error sending message
         dispatch(setTyping(false)); // Stop typing indicator on error
       } finally {
         setIsSendingMessage(false);
-      }
-    } else {
-      // Log why the message can't be sent
-      if (!newMessage.trim()) {
-        console.log("Cannot send: Message is empty");
-      } else if (isSendingMessage) {
-        console.log("Cannot send: Already sending a message");
-      } else if (!token) {
-        console.log("Cannot send: No token available");
       }
     }
   };
@@ -268,17 +237,15 @@ export default function ChatPage() {
 
         // Check if the session was created successfully
         if (createChatSession.fulfilled.match(result)) {
-          console.log("New chat session created successfully:", result.payload);
+          // Handle successful session creation
         } else {
-          console.error("Failed to create chat session:", result.error);
+          // Handle failed session creation
         }
       } catch (error) {
-        console.error("Error creating new chat:", error);
+        // Handle error creating new chat
       } finally {
         setIsCreatingSession(false);
       }
-    } else {
-      console.log("No token available, cannot create new chat");
     }
     setSidebarOpen(false);
   };
@@ -308,8 +275,6 @@ export default function ChatPage() {
           newTitle: renameValue.trim(),
         }),
       );
-    } else if (!token) {
-      console.log("No token available, cannot rename chat");
     }
     setIsRenameModalOpen(false);
     setRenamingChat(null);
@@ -329,11 +294,9 @@ export default function ChatPage() {
     if (token) {
       setIsFetchingSessionDetails(true);
       try {
-        console.log("Fetching latest session details for:", chatId);
         await dispatch(fetchChatSessionDetails({ token, sessionId: chatId }));
-        console.log("Session details loaded successfully");
       } catch (error) {
-        console.error("Error fetching session details:", error);
+        // Handle error fetching session details
       } finally {
         setIsFetchingSessionDetails(false);
       }
@@ -347,8 +310,6 @@ export default function ChatPage() {
   const handleDeleteChat = (chatId: string) => {
     if (token) {
       dispatch(deleteChatSession({ token, sessionId: chatId }));
-    } else {
-      console.log("No token available, cannot delete chat");
     }
   };
 

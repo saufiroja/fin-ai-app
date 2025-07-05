@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-const API_BASE_URL = "https://fin-ai-backend.fin-ai-api.my.id/api/v1";
+const API_BASE_URL = "http://localhost:8000/api/v1";
+
 // Types
 export interface Category {
   category_id: string;
@@ -37,53 +38,6 @@ export interface CategoryState {
   lastFetchParams: CategoryParams | null;
 }
 
-// Mock data for fallback
-const MOCK_CATEGORIES: Category[] = [
-  {
-    category_id: "cat1",
-    name: "Food",
-    type: "expense",
-    created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z",
-  },
-  {
-    category_id: "cat2",
-    name: "Salary",
-    type: "income",
-    created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z",
-  },
-  {
-    category_id: "cat3",
-    name: "Transportation",
-    type: "expense",
-    created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z",
-  },
-  {
-    category_id: "cat4",
-    name: "Utilities",
-    type: "expense",
-    created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z",
-  },
-  {
-    category_id: "cat5",
-    name: "Shopping",
-    type: "expense",
-    created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z",
-  },
-  {
-    category_id: "cat6",
-    name: "Entertainment",
-    type: "expense",
-    created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z",
-  },
-];
-
-// Async thunk
 export const fetchCategories = createAsyncThunk(
   "categories/fetchCategories",
   async (
@@ -117,44 +71,13 @@ export const fetchCategories = createAsyncThunk(
 
       return { data, params };
     } catch (error: any) {
-      console.log("API not available, using mock categories", error.message);
-
-      // Return mock data with the same structure as API
-      let filteredCategories = [...MOCK_CATEGORIES];
-
-      // Apply client-side filtering for mock data
-      if (params.search) {
-        filteredCategories = filteredCategories.filter((c) =>
-          c.name.toLowerCase().includes(params.search!.toLowerCase()),
-        );
-      }
-
-      // Apply pagination
-      const limit = params.limit || 10;
-      const offset = params.offset || 1;
-      const startIdx = (offset - 1) * limit;
-      const paginatedCategories = filteredCategories.slice(
-        startIdx,
-        startIdx + limit,
-      );
-
-      const mockResponse: CategoryResponse = {
-        status: 200,
-        message: "Mock categories retrieved successfully",
-        data: paginatedCategories,
-        pagination: {
-          total: filteredCategories.length,
-          current_page: offset,
-          total_pages: Math.ceil(filteredCategories.length / limit),
-        },
-      };
-
-      return { data: mockResponse, params };
+      return rejectWithValue({
+        message: error.message || "Failed to fetch categories",
+      });
     }
   },
 );
 
-// Initial state
 const initialState: CategoryState = {
   categories: [],
   pagination: {
