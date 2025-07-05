@@ -3,7 +3,7 @@ import Cookies from "js-cookie";
 
 import { AuthState } from "@/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://103.183.74.179:8080/api/v1";
+const API_BASE_URL = "http://103.183.74.179:8080/api/v1";
 
 // Mock user data
 const MOCK_USERS = [

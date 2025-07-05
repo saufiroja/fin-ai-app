@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://103.183.74.179:8080/api/v1";
+const API_BASE_URL = "http://103.183.74.179:8080/api/v1";
 
 // Types
 export interface Transaction {
