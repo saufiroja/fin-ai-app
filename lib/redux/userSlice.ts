@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 import { User } from "@/types";
 
-const API_BASE_URL = "https://103.183.74.179:8080/api/v1";
+const API_BASE_URL = "https://fin-ai-backend.fin-ai-api.my.id/api/v1";
 
 // Mock user data
 const MOCK_USERS = [
