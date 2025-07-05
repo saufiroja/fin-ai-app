@@ -41,7 +41,7 @@ const MOCK_SESSIONS: ChatSession[] = [
     archived: false,
   },
   {
-    id: "2", 
+    id: "2",
     title: "Budget Analysis",
     created_at: "2024-01-02T10:00:00Z",
     updated_at: "2024-01-02T10:00:00Z",
@@ -50,7 +50,7 @@ const MOCK_SESSIONS: ChatSession[] = [
   {
     id: "3",
     title: "Tax Planning",
-    created_at: "2024-01-03T10:00:00Z", 
+    created_at: "2024-01-03T10:00:00Z",
     updated_at: "2024-01-03T10:00:00Z",
     archived: false,
   },
@@ -65,7 +65,7 @@ const MOCK_MESSAGES: Record<string, ChatMessage[]> = {
       timestamp: "2024-01-01T10:00:00Z",
     },
     {
-      id: "msg2", 
+      id: "msg2",
       text: "I'd be happy to help you with investment planning! What's your current financial situation and investment goals?",
       sender: "bot",
       timestamp: "2024-01-01T10:01:00Z",
@@ -75,7 +75,7 @@ const MOCK_MESSAGES: Record<string, ChatMessage[]> = {
     {
       id: "msg3",
       text: "Can you help me analyze my monthly budget?",
-      sender: "user", 
+      sender: "user",
       timestamp: "2024-01-02T10:00:00Z",
     },
     {
@@ -100,14 +100,17 @@ const initialState: ChatState = {
 // Async thunks for API calls
 export const createChatSession = createAsyncThunk(
   "chat/createSession",
-  async ({ token, title = "New Chat" }: { token: string; title?: string }, { rejectWithValue }) => {
+  async (
+    { token, title = "New Chat" }: { token: string; title?: string },
+    { rejectWithValue },
+  ) => {
     try {
       // Try to connect to real API first
       const response = await fetch(`${API_BASE_URL}/chat/sessions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ title }),
       });
@@ -148,11 +151,11 @@ export const createChatSession = createAsyncThunk(
 
       return mockSession;
     }
-  }
+  },
 );
 
 export const fetchChatSessions = createAsyncThunk(
-  "chat/fetchSessions", 
+  "chat/fetchSessions",
   async (token: string, { rejectWithValue }) => {
     try {
       // Try to connect to real API first
@@ -160,7 +163,7 @@ export const fetchChatSessions = createAsyncThunk(
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       const apiResponse = await response.json();
@@ -191,25 +194,32 @@ export const fetchChatSessions = createAsyncThunk(
 
       return MOCK_SESSIONS;
     }
-  }
+  },
 );
 
 export const renameChatSession = createAsyncThunk(
   "chat/renameSession",
   async (
-    { token, sessionId, newTitle }: { token: string; sessionId: string; newTitle: string },
-    { rejectWithValue }
+    {
+      token,
+      sessionId,
+      newTitle,
+    }: { token: string; sessionId: string; newTitle: string },
+    { rejectWithValue },
   ) => {
     try {
       // Try to connect to real API first
-      const response = await fetch(`${API_BASE_URL}/chat/sessions/rename/${sessionId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+      const response = await fetch(
+        `${API_BASE_URL}/chat/sessions/rename/${sessionId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ title: newTitle }),
         },
-        body: JSON.stringify({ title: newTitle }),
-      });
+      );
       const apiResponse = await response.json();
 
       if (!response.ok) {
@@ -217,19 +227,21 @@ export const renameChatSession = createAsyncThunk(
       }
 
       // Return the updated session data
-      return { 
-        sessionId, 
+      return {
+        sessionId,
         newTitle,
-        updatedSession: apiResponse.data ? {
-          id: apiResponse.data.chat_session_id,
-          chat_session_id: apiResponse.data.chat_session_id,
-          user_id: apiResponse.data.user_id,
-          title: apiResponse.data.title,
-          created_at: apiResponse.data.created_at,
-          updated_at: apiResponse.data.updated_at,
-          deleted_at: apiResponse.data.deleted_at,
-          archived: false,
-        } : null
+        updatedSession: apiResponse.data
+          ? {
+              id: apiResponse.data.chat_session_id,
+              chat_session_id: apiResponse.data.chat_session_id,
+              user_id: apiResponse.data.user_id,
+              title: apiResponse.data.title,
+              created_at: apiResponse.data.created_at,
+              updated_at: apiResponse.data.updated_at,
+              deleted_at: apiResponse.data.deleted_at,
+              archived: false,
+            }
+          : null,
       };
     } catch (error: any) {
       // If API is not available, use mock data
@@ -240,24 +252,31 @@ export const renameChatSession = createAsyncThunk(
 
       return { sessionId, newTitle, updatedSession: null };
     }
-  }
+  },
 );
 
 export const deleteChatSession = createAsyncThunk(
   "chat/deleteSession",
-  async ({ token, sessionId }: { token: string; sessionId: string }, { rejectWithValue }) => {
+  async (
+    { token, sessionId }: { token: string; sessionId: string },
+    { rejectWithValue },
+  ) => {
     try {
       // Try to connect to real API first
-      const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+      const response = await fetch(
+        `${API_BASE_URL}/chat/sessions/${sessionId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       if (!response.ok) {
         const data = await response.json();
+
         return rejectWithValue(data);
       }
 
@@ -271,7 +290,7 @@ export const deleteChatSession = createAsyncThunk(
 
       return sessionId;
     }
-  }
+  },
 );
 
 // Chat slice
@@ -281,57 +300,70 @@ const chatSlice = createSlice({
   reducers: {
     setSelectedSession: (state, action: PayloadAction<string>) => {
       const sessionId = action.payload;
+
       state.selectedSessionId = sessionId;
-      state.selectedSession = state.sessions.find(s => s.id === sessionId) || null;
-      
+      state.selectedSession =
+        state.sessions.find((s) => s.id === sessionId) || null;
+
       // Save to localStorage
       if (typeof window !== "undefined") {
         localStorage.setItem("lastSelectedChatId", sessionId);
       }
     },
-    
-    addMessage: (state, action: PayloadAction<{ sessionId: string; message: Omit<ChatMessage, "id" | "timestamp"> }>) => {
+
+    addMessage: (
+      state,
+      action: PayloadAction<{
+        sessionId: string;
+        message: Omit<ChatMessage, "id" | "timestamp">;
+      }>,
+    ) => {
       const { sessionId, message } = action.payload;
       const newMessage: ChatMessage = {
         ...message,
         id: Date.now().toString(),
         timestamp: new Date().toISOString(),
       };
-      
+
       if (!state.messages[sessionId]) {
         state.messages[sessionId] = [];
       }
       state.messages[sessionId].push(newMessage);
-      
+
       // Save to localStorage
       if (typeof window !== "undefined") {
-        localStorage.setItem("chatMessagesById", JSON.stringify(state.messages));
+        localStorage.setItem(
+          "chatMessagesById",
+          JSON.stringify(state.messages),
+        );
       }
     },
-    
+
     setTyping: (state, action: PayloadAction<boolean>) => {
       state.isTyping = action.payload;
     },
-    
+
     clearError: (state) => {
       state.error = null;
     },
-    
+
     archiveSession: (state, action: PayloadAction<string>) => {
       const sessionId = action.payload;
-      const session = state.sessions.find(s => s.id === sessionId);
+      const session = state.sessions.find((s) => s.id === sessionId);
+
       if (session) {
         session.archived = true;
       }
     },
-    
+
     loadMessagesFromStorage: (state) => {
       if (typeof window !== "undefined") {
         const stored = localStorage.getItem("chatMessagesById");
+
         if (stored) {
           state.messages = JSON.parse(stored);
         }
-        
+
         // Load mock messages if no stored messages
         if (Object.keys(state.messages).length === 0) {
           state.messages = MOCK_MESSAGES;
@@ -352,21 +384,24 @@ const chatSlice = createSlice({
         state.sessions.unshift(action.payload);
         state.selectedSessionId = action.payload.id;
         state.selectedSession = action.payload;
-        
+
         // Initialize empty messages for new session
         state.messages[action.payload.id] = [];
-        
+
         // Save to localStorage
         if (typeof window !== "undefined") {
           localStorage.setItem("lastSelectedChatId", action.payload.id);
-          localStorage.setItem("chatMessagesById", JSON.stringify(state.messages));
+          localStorage.setItem(
+            "chatMessagesById",
+            JSON.stringify(state.messages),
+          );
         }
       })
       .addCase(createChatSession.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
-      
+
       // Fetch sessions
       .addCase(fetchChatSessions.pending, (state) => {
         state.loading = true;
@@ -375,17 +410,21 @@ const chatSlice = createSlice({
       .addCase(fetchChatSessions.fulfilled, (state, action) => {
         state.loading = false;
         // Sort sessions by updated_at descending (newest first)
-        const sortedSessions = action.payload.sort((a: ChatSession, b: ChatSession) => 
-          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        const sortedSessions = action.payload.sort(
+          (a: ChatSession, b: ChatSession) =>
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
         );
+
         state.sessions = sortedSessions;
-        
+
         // Set last selected session from localStorage
         if (typeof window !== "undefined") {
           const lastId = localStorage.getItem("lastSelectedChatId");
-          if (lastId && state.sessions.some(s => s.id === lastId)) {
+
+          if (lastId && state.sessions.some((s) => s.id === lastId)) {
             state.selectedSessionId = lastId;
-            state.selectedSession = state.sessions.find(s => s.id === lastId) || null;
+            state.selectedSession =
+              state.sessions.find((s) => s.id === lastId) || null;
           }
         }
       })
@@ -393,7 +432,7 @@ const chatSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      
+
       // Rename session
       .addCase(renameChatSession.pending, (state) => {
         state.loading = true;
@@ -402,7 +441,8 @@ const chatSlice = createSlice({
       .addCase(renameChatSession.fulfilled, (state, action) => {
         state.loading = false;
         const { sessionId, newTitle } = action.payload;
-        const session = state.sessions.find(s => s.id === sessionId);
+        const session = state.sessions.find((s) => s.id === sessionId);
+
         if (session) {
           session.title = newTitle;
           session.updated_at = new Date().toISOString();
@@ -415,7 +455,7 @@ const chatSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      
+
       // Delete session
       .addCase(deleteChatSession.pending, (state) => {
         state.loading = true;
@@ -424,24 +464,28 @@ const chatSlice = createSlice({
       .addCase(deleteChatSession.fulfilled, (state, action) => {
         state.loading = false;
         const sessionId = action.payload;
-        state.sessions = state.sessions.filter(s => s.id !== sessionId);
-        
+
+        state.sessions = state.sessions.filter((s) => s.id !== sessionId);
+
         // Clear messages for deleted session
         delete state.messages[sessionId];
-        
+
         // Clear selection if deleted session was selected
         if (state.selectedSessionId === sessionId) {
           state.selectedSessionId = null;
           state.selectedSession = null;
-          
+
           if (typeof window !== "undefined") {
             localStorage.removeItem("lastSelectedChatId");
           }
         }
-        
+
         // Update localStorage
         if (typeof window !== "undefined") {
-          localStorage.setItem("chatMessagesById", JSON.stringify(state.messages));
+          localStorage.setItem(
+            "chatMessagesById",
+            JSON.stringify(state.messages),
+          );
         }
       })
       .addCase(deleteChatSession.rejected, (state, action) => {

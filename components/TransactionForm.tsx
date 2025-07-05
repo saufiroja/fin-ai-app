@@ -100,13 +100,14 @@ export default function TransactionForm({
   const [isDataLoading, setIsDataLoading] = useState(mode === "update");
   const [error, setError] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
-  
+
   // Use a consistent date that works for both server and client
   const getInitialDate = () => {
     const now = new Date();
     const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+
     return parseDate(`${year}-${month}-${day}`);
   };
 
@@ -268,7 +269,7 @@ export default function TransactionForm({
           is_auto_categorized: false,
           confirmed: formData.confirmed || true,
           discount: parseInt(formData.discount || "0") || 0,
-          transaction_date: isClient 
+          transaction_date: isClient
             ? formData.date.toDate(getLocalTimeZone()).toISOString()
             : `${formData.date.toString()}T00:00:00.000Z`,
           ai_category_confidence: 0.0,
@@ -655,7 +656,9 @@ export default function TransactionForm({
                   <PopoverContent className="p-0">
                     <HeroCalendar
                       showMonthAndYearPickers
-                      maxValue={isClient ? today(getLocalTimeZone()) : getInitialDate()}
+                      maxValue={
+                        isClient ? today(getLocalTimeZone()) : getInitialDate()
+                      }
                       value={formData.date}
                       onChange={(date) => handleInputChange("date", date)}
                     />

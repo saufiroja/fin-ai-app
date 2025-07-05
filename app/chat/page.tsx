@@ -117,32 +117,36 @@ export default function ChatPage() {
     if (newMessage.trim() && selectedSessionId && !isSendingMessage) {
       setIsSendingMessage(true);
       dispatch(setTyping(true));
-      
+
       try {
         // Add user message
-        dispatch(addMessage({
-          sessionId: selectedSessionId,
-          message: {
-            text: newMessage,
-            sender: "user"
-          }
-        }));
+        dispatch(
+          addMessage({
+            sessionId: selectedSessionId,
+            message: {
+              text: newMessage,
+              sender: "user",
+            },
+          }),
+        );
 
         const userMessage = newMessage;
+
         setNewMessage("");
 
         // Simulate bot response (replace with actual API call)
         setTimeout(() => {
-          dispatch(addMessage({
-            sessionId: selectedSessionId,
-            message: {
-              text: `I understand you're asking about: "${userMessage}". This is a simulated response. Please connect to a real AI service for actual financial advice.`,
-              sender: "bot"
-            }
-          }));
+          dispatch(
+            addMessage({
+              sessionId: selectedSessionId,
+              message: {
+                text: `I understand you're asking about: "${userMessage}". This is a simulated response. Please connect to a real AI service for actual financial advice.`,
+                sender: "bot",
+              },
+            }),
+          );
           dispatch(setTyping(false));
         }, 1500);
-
       } catch (error) {
         console.error("Error sending message:", error);
         dispatch(setTyping(false));
@@ -156,7 +160,10 @@ export default function ChatPage() {
     if (token) {
       setIsCreatingSession(true);
       try {
-        const result = await dispatch(createChatSession({ token, title: "New Chat" }));
+        const result = await dispatch(
+          createChatSession({ token, title: "New Chat" }),
+        );
+
         // Check if the session was created successfully
         if (createChatSession.fulfilled.match(result)) {
           console.log("New chat session created successfully:", result.payload);
@@ -192,11 +199,13 @@ export default function ChatPage() {
       renamingChat &&
       token
     ) {
-      await dispatch(renameChatSession({
-        token,
-        sessionId: renamingChat.id,
-        newTitle: renameValue.trim()
-      }));
+      await dispatch(
+        renameChatSession({
+          token,
+          sessionId: renamingChat.id,
+          newTitle: renameValue.trim(),
+        }),
+      );
     } else if (!token) {
       console.log("No token available, cannot rename chat");
     }
@@ -228,8 +237,6 @@ export default function ChatPage() {
     }
   };
 
-
-
   // Show loading skeleton during initial load only
   if (isInitialLoading) {
     return <Loading />;
@@ -239,8 +246,9 @@ export default function ChatPage() {
     <div className="flex h-[calc(100vh-2rem)] md:h-[calc(93vh-2rem)] bg-gradient-to-br from-background to-content1 rounded-none md:rounded-3xl overflow-hidden shadow-2xl relative">
       {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div
+        <button
           className="fixed inset-0 bg-black/50 z-30 md:hidden cursor-pointer"
+          type="button"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -377,7 +385,9 @@ export default function ChatPage() {
               isLoading={isCreatingSession}
               radius="lg"
               size="md"
-              startContent={!isCreatingSession && <Icon icon="lucide:message-square" />}
+              startContent={
+                !isCreatingSession && <Icon icon="lucide:message-square" />
+              }
               variant="shadow"
               onPress={handleNewChat}
             >
@@ -411,90 +421,93 @@ export default function ChatPage() {
                         chat.title.toLowerCase().includes(search.toLowerCase()),
                       )
                       .map((chat: any) => (
-                      <div key={chat.id} className="relative group">
-                        <button
+                        <div key={chat.id} className="relative group">
+                          <button
                             className={`w-full transition-all duration-200 hover:bg-content2/80 hover:shadow-lg shadow-none rounded-md cursor-pointer text-left border-none py-2 px-4 relative
-                            ${selectedSessionId === chat.id
-                              ? "bg-primary/20 border-l-4 border-primary"
-                              : "bg-content2/50"}`}
-                          type="button"
-                          onClick={() => {
-                            handleChatSelect(chat.id);
-                            setTimeout(() => {
-                              const textarea = document.querySelector(
-                                'textarea[placeholder="Ask me anything about finance..."]',
-                              ) as HTMLTextAreaElement;
+                            ${
+                              selectedSessionId === chat.id
+                                ? "bg-primary/20 border-l-4 border-primary"
+                                : "bg-content2/50"
+                            }`}
+                            type="button"
+                            onClick={() => {
+                              handleChatSelect(chat.id);
+                              setTimeout(() => {
+                                const textarea = document.querySelector(
+                                  'textarea[placeholder="Ask me anything about finance..."]',
+                                ) as HTMLTextAreaElement;
 
-                              if (textarea) textarea.focus();
-                            }, 200);
-                          }}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 w-full">
-                              <div className="w-full flex items-center gap-2">
-                                <h4 className="text-sm font-medium truncate max-w-full block">
-                                  {chat.title}
-                                </h4>
-                                {chat.archived && (
-                                  <span className="text-xs text-warning-600 bg-warning-100 rounded px-2 py-0.5 ml-1">
-                                    Archived
-                                  </span>
-                                )}
+                                if (textarea) textarea.focus();
+                              }, 200);
+                            }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 w-full">
+                                <div className="w-full flex items-center gap-2">
+                                  <h4 className="text-sm font-medium truncate max-w-full block">
+                                    {chat.title}
+                                  </h4>
+                                  {chat.archived && (
+                                    <span className="text-xs text-warning-600 bg-warning-100 rounded px-2 py-0.5 ml-1">
+                                      Archived
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </button>
-                        {/* Action Dropdown positioned outside the clickable area */}
-                        <div
-                          className="absolute right-2 top-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Dropdown placement="bottom-end">
-                            <DropdownTrigger>
-                              <Button
-                                isIconOnly
-                                aria-label="Open chat actions"
-                                className="min-w-6 w-6 h-6 bg-content1/80 backdrop-blur-sm rounded-full flex items-center justify-center"
-                                size="sm"
-                                variant="light"
-                              >
-                                <Icon
-                                  className="text-xs"
-                                  icon="lucide:more-horizontal"
-                                />
-                              </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu
-                              closeOnSelect
-                              aria-label="Chat actions"
-                              className="bg-content1/95 rounded-lg p-1 min-w-[140px] border border-divider/20 block md:absolute md:left-0 md:top-full"
-                              items={actions}
-                              onAction={async (key) => {
-                                if (key === "delete") {
-                                  handleDeleteChat(chat.id);
-                                } else if (key === "rename") {
-                                  handleRenameClick(chat);
-                                } else if (key === "archive") {
-                                  handleArchiveChat(chat.id);
-                                }
-                              }}
-                            >
-                              {actions.map((action) => (
-                                <DropdownItem
-                                  key={action.key}
-                                  className={`text-sm text-${action.color}-600 hover:bg-${action.color}-100`}
-                                  startContent={
-                                    <Icon icon={`${action.icon}`} />
-                                  }
+                          </button>
+                          {/* Action Dropdown positioned outside the clickable area */}
+                          <button
+                            className="absolute right-2 top-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10"
+                            type="button"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Dropdown placement="bottom-end">
+                              <DropdownTrigger>
+                                <Button
+                                  isIconOnly
+                                  aria-label="Open chat actions"
+                                  className="min-w-6 w-6 h-6 bg-content1/80 backdrop-blur-sm rounded-full flex items-center justify-center"
+                                  size="sm"
+                                  variant="light"
                                 >
-                                  {action.label}
-                                </DropdownItem>
-                              ))}
-                            </DropdownMenu>
-                          </Dropdown>
+                                  <Icon
+                                    className="text-xs"
+                                    icon="lucide:more-horizontal"
+                                  />
+                                </Button>
+                              </DropdownTrigger>
+                              <DropdownMenu
+                                closeOnSelect
+                                aria-label="Chat actions"
+                                className="bg-content1/95 rounded-lg p-1 min-w-[140px] border border-divider/20 block md:absolute md:left-0 md:top-full"
+                                items={actions}
+                                onAction={async (key) => {
+                                  if (key === "delete") {
+                                    handleDeleteChat(chat.id);
+                                  } else if (key === "rename") {
+                                    handleRenameClick(chat);
+                                  } else if (key === "archive") {
+                                    handleArchiveChat(chat.id);
+                                  }
+                                }}
+                              >
+                                {actions.map((action) => (
+                                  <DropdownItem
+                                    key={action.key}
+                                    className={`text-sm text-${action.color}-600 hover:bg-${action.color}-100`}
+                                    startContent={
+                                      <Icon icon={`${action.icon}`} />
+                                    }
+                                  >
+                                    {action.label}
+                                  </DropdownItem>
+                                ))}
+                              </DropdownMenu>
+                            </Dropdown>
+                          </button>
                         </div>
-                      </div>
-                    ))
+                      ))
                   )}
                 </div>
               </ScrollShadow>
@@ -504,8 +517,9 @@ export default function ChatPage() {
       </Card>
 
       {/* Main Chat Area */}
-      <div
+      <button
         className="flex-1 flex flex-col bg-content1/30 backdrop-blur-xl w-full relative cursor-pointer"
+        type="button"
         onClick={() => {
           if (sidebarOpen) {
             setSidebarOpen(false);
@@ -536,7 +550,9 @@ export default function ChatPage() {
           hideScrollBar
           className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-content2/50 backdrop-blur-sm"
         >
-          {(selectedSessionId && chatMessagesById[selectedSessionId]?.length || 0) === 0 ? (
+          {((selectedSessionId &&
+            chatMessagesById[selectedSessionId]?.length) ||
+            0) === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center max-w-2xl mx-auto px-4">
               <div className="relative mb-6 md:mb-8">
                 <div className="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-3xl flex items-center justify-center backdrop-blur-sm border border-divider/30 shadow-2xl">
@@ -597,9 +613,10 @@ export default function ChatPage() {
             </div>
           ) : (
             <div className="space-y-4 md:space-y-6 max-w-4xl mx-auto w-full">
-              {selectedSessionId && chatMessagesById[selectedSessionId]?.map((message: any) => (
-                <ChatMessage key={message.id} message={message} />
-              ))}
+              {selectedSessionId &&
+                chatMessagesById[selectedSessionId]?.map((message: any) => (
+                  <ChatMessage key={message.id} message={message} />
+                ))}
               {isTyping && (
                 <div className="flex items-center gap-3 px-2 md:px-4">
                   <Avatar
@@ -667,7 +684,7 @@ export default function ChatPage() {
             />
           </CardBody>
         </Card>
-      </div>
+      </button>
     </div>
   );
 }

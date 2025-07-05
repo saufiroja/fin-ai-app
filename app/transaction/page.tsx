@@ -80,31 +80,31 @@ export default function TransactionPage() {
   }, [search]);
 
   const fetchTransactionsData = useCallback(() => {
-  if (!token) return;
+    if (!token) return;
 
-  let startDate = "";
-  let endDate = "";
+    let startDate = "";
+    let endDate = "";
 
-  if (dateRange && dateRange.start && dateRange.end) {
-    startDate = formatDateForAPI(dateRange.start, false); // 00:00:00
-    endDate = formatDateForAPI(dateRange.end, true); // 23:59:59
-  }
+    if (dateRange && dateRange.start && dateRange.end) {
+      startDate = formatDateForAPI(dateRange.start, false); // 00:00:00
+      endDate = formatDateForAPI(dateRange.end, true); // 23:59:59
+    }
 
-  const params = {
-    limit: pageSize,
-    offset: page,
-    category_id: category || undefined,
-    search: debouncedSearch || undefined,
-    startDate: startDate || undefined,
-    endDate: endDate || undefined,
-  };
+    const params = {
+      limit: pageSize,
+      offset: page,
+      category_id: category || undefined,
+      search: debouncedSearch || undefined,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+    };
 
-  dispatch(
+    dispatch(
       fetchTransactions({
         token,
         params,
       }),
-  );
+    );
   }, [token, debouncedSearch, category, dateRange, page, pageSize, dispatch]);
 
   const fetchOverviewData = useCallback(() => {
@@ -389,7 +389,7 @@ export default function TransactionPage() {
                   onClear={() => handleSearchChange("")}
                 />
               </div>
-              
+
               {/* Category and Date filters - Stack on mobile, side by side on desktop */}
               <div className="flex flex-col sm:flex-row gap-4">
                 <Select
@@ -404,7 +404,7 @@ export default function TransactionPage() {
                     </SelectItem>
                   ))}
                 </Select>
-                
+
                 <div className="flex-1">
                   <Popover>
                     <PopoverTrigger>
@@ -430,7 +430,7 @@ export default function TransactionPage() {
                   </Popover>
                 </div>
               </div>
-              
+
               {/* View Mode Tabs - Only show on desktop */}
               {!isMobile && (
                 <div className="flex justify-end">
@@ -492,10 +492,7 @@ export default function TransactionPage() {
                             {tx.description}
                           </TableCell>
                           <TableCell className="text-center">
-                            <Chip
-                              color="primary"
-                              variant="flat"
-                            >
+                            <Chip color="primary" variant="flat">
                               {getCategoryDisplay(tx.category_id)}
                             </Chip>
                           </TableCell>
@@ -587,10 +584,7 @@ export default function TransactionPage() {
                       </Chip>
                     </CardHeader>
                     <CardBody className="mb-2">
-                      <Chip
-                        color="primary"
-                        variant="flat"
-                      >
+                      <Chip color="primary" variant="flat">
                         {getCategoryDisplay(tx.category_id)}
                       </Chip>
                     </CardBody>
