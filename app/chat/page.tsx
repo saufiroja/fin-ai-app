@@ -40,6 +40,8 @@ import {
   setTyping,
   clearError,
   loadMessagesFromStorage,
+  sendChatMessage,
+  fetchChatSessionDetails,
 } from "@/lib/redux/chatSlice";
 
 const actions = [
@@ -66,6 +68,7 @@ const actions = [
 export default function ChatPage() {
   const { token } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch<AppDispatch>();
+
   const {
     sessions: chatHistory,
     messages: chatMessagesById,
@@ -82,6 +85,8 @@ export default function ChatPage() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const [isFetchingSessionDetails, setIsFetchingSessionDetails] =
+    useState(false);
 
   // Modal state
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
@@ -94,6 +99,28 @@ export default function ChatPage() {
       dispatch(loadMessagesFromStorage());
       if (token) {
         await dispatch(fetchChatSessions(token));
+
+        // If there's a last selected session, fetch its details
+        if (typeof window !== "undefined") {
+          const lastId = localStorage.getItem("lastSelectedChatId");
+
+          if (lastId) {
+            setIsFetchingSessionDetails(true);
+            try {
+              await dispatch(
+                fetchChatSessionDetails({ token, sessionId: lastId }),
+              );
+              console.log("Last selected session details loaded");
+            } catch (error) {
+              console.error(
+                "Error fetching last selected session details:",
+                error,
+              );
+            } finally {
+              setIsFetchingSessionDetails(false);
+            }
+          }
+        }
       } else {
         // If no token, we can still load from localStorage or show empty state
         console.log("No token available, using mock data only");
@@ -114,44 +141,119 @@ export default function ChatPage() {
   }, [error, dispatch]);
 
   const handleSendMessage = async () => {
-    if (newMessage.trim() && selectedSessionId && !isSendingMessage) {
+    console.log("HandleSendMessage called with:", {
+      hasMessage: !!newMessage.trim(),
+      isSendingMessage,
+      hasToken: !!token,
+      selectedSessionId,
+    });
+
+    if (newMessage.trim() && !isSendingMessage && token) {
+      let sessionId = selectedSessionId;
+
+      // If no session is selected, create a new one first
+      if (!sessionId) {
+        console.log("No session selected, creating new session...");
+        setIsCreatingSession(true);
+        try {
+          const result = await dispatch(
+            createChatSession({ token, title: "New Chat" }),
+          );
+
+          if (createChatSession.fulfilled.match(result)) {
+            // Get the session ID from the created session
+            sessionId = result.payload.id;
+            console.log(
+              "New chat session created successfully:",
+              result.payload,
+            );
+          } else {
+            console.error("Failed to create chat session:", result.error);
+            setIsCreatingSession(false);
+
+            return;
+          }
+        } catch (error) {
+          console.error("Error creating new chat:", error);
+          setIsCreatingSession(false);
+
+          return;
+        }
+        setIsCreatingSession(false);
+      }
+
+      // Make sure we have a valid session ID
+      if (!sessionId) {
+        console.error("No session ID available");
+
+        return;
+      }
+
+      console.log("Sending message to session:", sessionId);
       setIsSendingMessage(true);
-      dispatch(setTyping(true));
 
       try {
-        // Add user message
+        const userMessage = newMessage;
+
+        setNewMessage("");
+
+        // Immediately add the user message to the chat
         dispatch(
           addMessage({
-            sessionId: selectedSessionId,
+            sessionId,
             message: {
-              text: newMessage,
+              text: userMessage,
               sender: "user",
             },
           }),
         );
 
-        const userMessage = newMessage;
+        // Show typing indicator
+        dispatch(setTyping(true));
 
-        setNewMessage("");
+        // Send message using the API
+        const result = await dispatch(
+          sendChatMessage({
+            token,
+            chatSessionId: sessionId,
+            message: userMessage,
+            mode: "ask", // or "agent" depending on your needs
+          }),
+        );
 
-        // Simulate bot response (replace with actual API call)
-        setTimeout(() => {
-          dispatch(
-            addMessage({
-              sessionId: selectedSessionId,
-              message: {
-                text: `I understand you're asking about: "${userMessage}". This is a simulated response. Please connect to a real AI service for actual financial advice.`,
-                sender: "bot",
-              },
-            }),
-          );
-          dispatch(setTyping(false));
-        }, 1500);
+        // Check if the message was sent successfully
+        if (sendChatMessage.fulfilled.match(result)) {
+          console.log("Message sent successfully:", result.payload);
+
+          // After successful send, fetch the latest session details to get updated messages
+          setIsFetchingSessionDetails(true);
+          try {
+            await dispatch(fetchChatSessionDetails({ token, sessionId }));
+            console.log("Session details refreshed after sending message");
+          } catch (error) {
+            console.error("Error refreshing session details:", error);
+          } finally {
+            setIsFetchingSessionDetails(false);
+            dispatch(setTyping(false)); // Stop typing indicator after fetching
+          }
+        } else {
+          console.error("Failed to send message:", result.error);
+          dispatch(setTyping(false)); // Stop typing indicator on error
+        }
       } catch (error) {
         console.error("Error sending message:", error);
-        dispatch(setTyping(false));
+        dispatch(setTyping(false)); // Stop typing indicator on error
       } finally {
         setIsSendingMessage(false);
+      }
+    } else {
+      // Log why the message can't be sent
+      if (!newMessage.trim()) {
+        console.log("Cannot send: Message is empty");
+      } else if (isSendingMessage) {
+        console.log("Cannot send: Already sending a message");
+      } else if (!token) {
+        console.log("Cannot send: No token available");
       }
     }
   };
@@ -220,9 +322,22 @@ export default function ChatPage() {
     setRenameValue("");
   };
 
-  const handleChatSelect = (chatId: string) => {
+  const handleChatSelect = async (chatId: string) => {
     dispatch(setSelectedSession(chatId));
     setSidebarOpen(false);
+
+    if (token) {
+      setIsFetchingSessionDetails(true);
+      try {
+        console.log("Fetching latest session details for:", chatId);
+        await dispatch(fetchChatSessionDetails({ token, sessionId: chatId }));
+        console.log("Session details loaded successfully");
+      } catch (error) {
+        console.error("Error fetching session details:", error);
+      } finally {
+        setIsFetchingSessionDetails(false);
+      }
+    }
   };
 
   const handleArchiveChat = (chatId: string) => {
@@ -237,7 +352,6 @@ export default function ChatPage() {
     }
   };
 
-  // Show loading skeleton during initial load only
   if (isInitialLoading) {
     return <Loading />;
   }
@@ -422,14 +536,14 @@ export default function ChatPage() {
                       )
                       .map((chat: any) => (
                         <div key={chat.id} className="relative group">
-                          <button
-                            className={`w-full transition-all duration-200 hover:bg-content2/80 hover:shadow-lg shadow-none rounded-md cursor-pointer text-left border-none py-2 px-4 relative
+                          <div
+                            className={`w-full transition-all duration-200 hover:bg-content2/80 hover:shadow-lg shadow-none rounded-md cursor-pointer text-left py-2 px-4 relative
                             ${
                               selectedSessionId === chat.id
                                 ? "bg-primary/20 border-l-4 border-primary"
                                 : "bg-content2/50"
                             }`}
-                            type="button"
+                            role="button"
                             onClick={() => {
                               handleChatSelect(chat.id);
                               setTimeout(() => {
@@ -455,11 +569,11 @@ export default function ChatPage() {
                                 </div>
                               </div>
                             </div>
-                          </button>
+                          </div>
                           {/* Action Dropdown positioned outside the clickable area */}
-                          <button
+                          <div
                             className="absolute right-2 top-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10"
-                            type="button"
+                            role="button"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <Dropdown placement="bottom-end">
@@ -505,7 +619,7 @@ export default function ChatPage() {
                                 ))}
                               </DropdownMenu>
                             </Dropdown>
-                          </button>
+                          </div>
                         </div>
                       ))
                   )}
@@ -517,9 +631,9 @@ export default function ChatPage() {
       </Card>
 
       {/* Main Chat Area */}
-      <button
+      <div
         className="flex-1 flex flex-col bg-content1/30 backdrop-blur-xl w-full relative cursor-pointer"
-        type="button"
+        role="button"
         onClick={() => {
           if (sidebarOpen) {
             setSidebarOpen(false);
@@ -583,10 +697,10 @@ export default function ChatPage() {
                     key={index}
                     isPressable
                     className="p-3 md:p-4 hover:scale-105 transition-all duration-200 bg-content2/50 backdrop-blur-sm border-divider/30"
-                    isDisabled={isSendingMessage}
+                    isDisabled={isSendingMessage || isCreatingSession}
                     radius="lg"
                     onPress={() => {
-                      if (!isSendingMessage) {
+                      if (!isSendingMessage && !isCreatingSession) {
                         setNewMessage(prompt.text);
                         setTimeout(() => {
                           handleSendMessage();
@@ -617,7 +731,7 @@ export default function ChatPage() {
                 chatMessagesById[selectedSessionId]?.map((message: any) => (
                   <ChatMessage key={message.id} message={message} />
                 ))}
-              {isTyping && (
+              {(isTyping || isFetchingSessionDetails) && (
                 <div className="flex items-center gap-3 px-2 md:px-4">
                   <Avatar
                     className="bg-gradient-to-r from-primary to-secondary text-primary-foreground"
@@ -627,7 +741,10 @@ export default function ChatPage() {
                     <Icon className="text-lg" icon="lucide:robot" />
                   </Avatar>
                   <span className="text-sm text-default-500">
-                    Fin-AI is typing...
+                    {isTyping && "Fin-AI is thinking..."}
+                    {!isTyping &&
+                      isFetchingSessionDetails &&
+                      "Loading messages..."}
                   </span>
                 </div>
               )}
@@ -650,8 +767,10 @@ export default function ChatPage() {
                   aria-label="Send message"
                   className="rounded-full shadow-md transition-transform hover:scale-110 active:scale-95 duration-150 bg-gradient-to-r from-primary to-secondary"
                   color="primary"
-                  isDisabled={isSendingMessage || !newMessage.trim()}
-                  isLoading={isSendingMessage}
+                  isDisabled={
+                    isSendingMessage || isCreatingSession || !newMessage.trim()
+                  }
+                  isLoading={isSendingMessage || isCreatingSession}
                   size="sm"
                   type="submit"
                   variant="solid"
@@ -662,7 +781,7 @@ export default function ChatPage() {
                   )}
                 </Button>
               }
-              isDisabled={isSendingMessage}
+              isDisabled={isSendingMessage || isCreatingSession}
               maxRows={4}
               minRows={1}
               placeholder="Ask me anything about finance..."
@@ -675,7 +794,12 @@ export default function ChatPage() {
               value={newMessage}
               variant="bordered"
               onKeyDown={(e: any) => {
-                if (e.key === "Enter" && !e.shiftKey && !isSendingMessage) {
+                if (
+                  e.key === "Enter" &&
+                  !e.shiftKey &&
+                  !isSendingMessage &&
+                  !isCreatingSession
+                ) {
                   e.preventDefault();
                   handleSendMessage();
                 }
@@ -684,7 +808,7 @@ export default function ChatPage() {
             />
           </CardBody>
         </Card>
-      </button>
+      </div>
     </div>
   );
 }

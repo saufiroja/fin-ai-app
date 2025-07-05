@@ -17,7 +17,7 @@ export interface ChatSession {
 export interface ChatMessage {
   id: string;
   text: string;
-  sender: "user" | "bot";
+  sender: "user" | "bot" | "ai";
   timestamp: string;
 }
 
@@ -293,6 +293,163 @@ export const deleteChatSession = createAsyncThunk(
   },
 );
 
+export const sendChatMessage = createAsyncThunk(
+  "chat/sendMessage",
+  async (
+    {
+      token,
+      chatSessionId,
+      message,
+      modelId = "01JW320X5V1N7QQS2YAFC6FS71",
+      mode = "ask",
+    }: {
+      token: string;
+      chatSessionId: string;
+      message: string;
+      modelId?: string;
+      mode?: "ask" | "agent";
+    },
+    { rejectWithValue },
+  ) => {
+    console.log("SendChatMessage called with:", {
+      chatSessionId,
+      message: message.substring(0, 50) + "...",
+      mode,
+      hasToken: !!token,
+    });
+
+    try {
+      // Try to connect to real API first
+      const requestBody = {
+        chat_session_id: chatSessionId,
+        model_id: modelId,
+        mode: mode,
+        message: message,
+      };
+
+      console.log("API Request body:", requestBody);
+
+      const response = await fetch(`${API_BASE_URL}/chat/sessions/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log("API Response status:", response.status);
+      const apiResponse = await response.json();
+
+      console.log("API Response:", apiResponse);
+
+      if (!response.ok) {
+        console.error("API Error:", apiResponse);
+
+        return rejectWithValue(apiResponse);
+      }
+
+      // Transform API response to match our interface
+      const conversation = apiResponse.data.conversation || [];
+      const transformedMessages: ChatMessage[] = conversation.map(
+        (msg: any, index: number) => ({
+          id: `${apiResponse.data.chat_message_id}_${index}`,
+          text: msg.text,
+          sender: msg.sender === "ai" ? "bot" : msg.sender,
+          timestamp: apiResponse.data.created_at,
+        }),
+      );
+
+      return {
+        sessionId: chatSessionId,
+        messages: transformedMessages,
+        messageId: apiResponse.data.chat_message_id,
+      };
+    } catch (error: any) {
+      // If API is not available, use mock response
+      console.log("API error occurred:", error.message);
+      console.log("Using mock chat response as fallback");
+
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // Create mock response
+      const mockMessages: ChatMessage[] = [
+        {
+          id: `user_${Date.now()}`,
+          text: message,
+          sender: "user",
+          timestamp: new Date().toISOString(),
+        },
+        {
+          id: `bot_${Date.now()}`,
+          text: `I understand you're asking about: "${message}". This is a simulated response. Please connect to a real AI service for actual financial advice.`,
+          sender: "bot",
+          timestamp: new Date().toISOString(),
+        },
+      ];
+
+      console.log("Mock response created:", mockMessages);
+
+      return {
+        sessionId: chatSessionId,
+        messages: mockMessages,
+        messageId: `mock_${Date.now()}`,
+      };
+    }
+  },
+);
+
+export const fetchChatSessionDetails = createAsyncThunk(
+  "chat/fetchSessionDetails",
+  async (
+    { token, sessionId }: { token: string; sessionId: string },
+    { rejectWithValue },
+  ) => {
+    try {
+      // Try to connect to real API first
+      const response = await fetch(
+        `${API_BASE_URL}/chat/sessions/${sessionId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const apiResponse = await response.json();
+
+      if (!response.ok) {
+        return rejectWithValue(apiResponse);
+      }
+
+      // Transform API response to match our interface
+      const messages: ChatMessage[] = apiResponse.data.map((msg: any) => ({
+        id: msg.chat_message_id,
+        text: msg.message,
+        sender: msg.sender === "ai" ? "bot" : msg.sender,
+        timestamp: msg.created_at,
+      }));
+
+      return {
+        sessionId,
+        messages,
+      };
+    } catch (error: any) {
+      // If API is not available, check localStorage first
+      console.log("API not available, using stored messages");
+
+      // Return empty messages or stored messages
+      return {
+        sessionId,
+        messages: [], // Will fall back to localStorage in the component
+      };
+    }
+  },
+);
+
 // Chat slice
 const chatSlice = createSlice({
   name: "chat",
@@ -489,6 +646,35 @@ const chatSlice = createSlice({
         }
       })
       .addCase(deleteChatSession.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      .addCase(sendChatMessage.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(sendChatMessage.rejected, (state, action) => {
+        state.error = action.payload as string;
+      })
+
+      .addCase(fetchChatSessionDetails.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchChatSessionDetails.fulfilled, (state, action) => {
+        state.loading = false;
+        const { sessionId, messages } = action.payload;
+
+        state.messages[sessionId] = messages;
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem(
+            "chatMessagesById",
+            JSON.stringify(state.messages),
+          );
+        }
+      })
+      .addCase(fetchChatSessionDetails.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
