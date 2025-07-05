@@ -4,6 +4,7 @@ import authReducer from "./authSlice";
 import userReducer from "./userSlice";
 import transactionReducer from "./transactionSlice";
 import categoryReducer from "./categorySlice";
+import chatReducer from "./chatSlice";
 
 export const store = configureStore({
   reducer: {
@@ -11,6 +12,7 @@ export const store = configureStore({
     user: userReducer,
     transactions: transactionReducer,
     categories: categoryReducer,
+    chat: chatReducer,
   },
 });
 

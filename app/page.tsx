@@ -12,7 +12,6 @@ import { useEffect, useState } from "react";
 
 import SparkleIcon from "@/components/sparkle-icon";
 import { PhotoUpload } from "@/components/photo-upload";
-import { useChatMessages } from "@/hooks/use-chat-message";
 import { subtitle } from "@/components/primitives";
 import { getUserMe } from "@/lib/redux/userSlice";
 import { AppDispatch, RootState } from "@/lib/redux/store";
@@ -38,7 +37,6 @@ export default function Home() {
   ];
 
   const [randomSubtitle, setRandomSubtitle] = useState(subtitles[0]);
-  const { addMessage } = useChatMessages();
   const [newMessage, setNewMessage] = useState("");
   const [activeTab, setActiveTab] = useState("chat");
   const [isLoading, setIsLoading] = useState(false);

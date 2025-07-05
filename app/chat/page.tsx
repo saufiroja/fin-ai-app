@@ -1,5 +1,6 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Avatar } from "@heroui/avatar";
 import {
@@ -27,7 +28,19 @@ import Loading from "./loading";
 import { ChatMessage } from "@/components/chat-message";
 import SparkleIcon from "@/components/sparkle-icon";
 import { suggestedPrompts } from "@/dummy/suggestedPrompts";
-import { useChatService } from "@/hooks/useChatService";
+import { RootState, AppDispatch } from "@/lib/redux/store";
+import {
+  fetchChatSessions,
+  createChatSession,
+  renameChatSession,
+  deleteChatSession,
+  archiveSession,
+  setSelectedSession,
+  addMessage,
+  setTyping,
+  clearError,
+  loadMessagesFromStorage,
+} from "@/lib/redux/chatSlice";
 
 const actions = [
   {
@@ -51,48 +64,113 @@ const actions = [
 ];
 
 export default function ChatPage() {
+  const { token } = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch<AppDispatch>();
   const {
-    chatHistory,
-    chatMessagesById,
-    setChatMessagesById,
-    selectedChat,
-    setSelectedChat,
-    selectedChatId,
-    setSelectedChatId,
+    sessions: chatHistory,
+    messages: chatMessagesById,
+    selectedSessionId,
+    selectedSession,
+    loading: isLoading,
+    error,
     isTyping,
-    createNewChat,
-    sendMessage,
-    renameChat,
-    deleteChat,
-    archiveChat,
-  } = useChatService();
-  const [newMessage, setNewMessage] = React.useState("");
-  const [sidebarOpen, setSidebarOpen] = React.useState(false);
-  const [search, setSearch] = React.useState("");
+  } = useSelector((state: RootState) => state.chat);
+
+  const [newMessage, setNewMessage] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
 
   // Modal state
-  const [isRenameModalOpen, setIsRenameModalOpen] = React.useState(false);
-  const [renamingChat, setRenamingChat] = React.useState<any>(null);
-  const [renameValue, setRenameValue] = React.useState("");
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [renamingChat, setRenamingChat] = useState<any>(null);
+  const [renameValue, setRenameValue] = useState("");
+
+  // Initialize chat data
+  useEffect(() => {
+    const initializeChat = async () => {
+      dispatch(loadMessagesFromStorage());
+      if (token) {
+        await dispatch(fetchChatSessions(token));
+      } else {
+        // If no token, we can still load from localStorage or show empty state
+        console.log("No token available, using mock data only");
+      }
+      setIsInitialLoading(false);
+    };
+
+    initializeChat();
+  }, [dispatch, token]);
+
+  // Show error notification
+  useEffect(() => {
+    if (error) {
+      console.error("Chat error:", error);
+      // You can add toast notification here
+      dispatch(clearError());
+    }
+  }, [error, dispatch]);
 
   const handleSendMessage = async () => {
-    if (newMessage.trim() && selectedChatId && !isSendingMessage) {
+    if (newMessage.trim() && selectedSessionId && !isSendingMessage) {
       setIsSendingMessage(true);
+      dispatch(setTyping(true));
+      
       try {
-        await sendMessage(newMessage);
+        // Add user message
+        dispatch(addMessage({
+          sessionId: selectedSessionId,
+          message: {
+            text: newMessage,
+            sender: "user"
+          }
+        }));
+
+        const userMessage = newMessage;
         setNewMessage("");
+
+        // Simulate bot response (replace with actual API call)
+        setTimeout(() => {
+          dispatch(addMessage({
+            sessionId: selectedSessionId,
+            message: {
+              text: `I understand you're asking about: "${userMessage}". This is a simulated response. Please connect to a real AI service for actual financial advice.`,
+              sender: "bot"
+            }
+          }));
+          dispatch(setTyping(false));
+        }, 1500);
+
       } catch (error) {
         console.error("Error sending message:", error);
+        dispatch(setTyping(false));
       } finally {
         setIsSendingMessage(false);
       }
     }
   };
 
-  const handleNewChat = () => {
-    createNewChat();
+  const handleNewChat = async () => {
+    if (token) {
+      setIsCreatingSession(true);
+      try {
+        const result = await dispatch(createChatSession({ token, title: "New Chat" }));
+        // Check if the session was created successfully
+        if (createChatSession.fulfilled.match(result)) {
+          console.log("New chat session created successfully:", result.payload);
+        } else {
+          console.error("Failed to create chat session:", result.error);
+        }
+      } catch (error) {
+        console.error("Error creating new chat:", error);
+      } finally {
+        setIsCreatingSession(false);
+      }
+    } else {
+      console.log("No token available, cannot create new chat");
+    }
     setSidebarOpen(false);
   };
 
@@ -106,14 +184,21 @@ export default function ChatPage() {
     setIsRenameModalOpen(true);
   };
 
-  const handleRenameSubmit = (e: React.FormEvent) => {
+  const handleRenameSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (
       renameValue.trim() &&
       renameValue !== renamingChat?.title &&
-      renamingChat
+      renamingChat &&
+      token
     ) {
-      renameChat(renamingChat.id, renameValue.trim());
+      await dispatch(renameChatSession({
+        token,
+        sessionId: renamingChat.id,
+        newTitle: renameValue.trim()
+      }));
+    } else if (!token) {
+      console.log("No token available, cannot rename chat");
     }
     setIsRenameModalOpen(false);
     setRenamingChat(null);
@@ -126,31 +211,26 @@ export default function ChatPage() {
     setRenameValue("");
   };
 
-  useEffect(() => {
-    // Simulate initial loading for chat history and settings
-    const initializeChat = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setIsInitialLoading(false);
-    };
+  const handleChatSelect = (chatId: string) => {
+    dispatch(setSelectedSession(chatId));
+    setSidebarOpen(false);
+  };
 
-    initializeChat();
-  }, []);
+  const handleArchiveChat = (chatId: string) => {
+    dispatch(archiveSession(chatId));
+  };
 
-  useEffect(() => {
-    // Saat halaman chat dibuka, cek apakah ada chat terakhir yang dipilih di localStorage
-    if (typeof window !== "undefined") {
-      const lastId = localStorage.getItem("lastSelectedChatId");
-
-      if (lastId && chatHistory.some((c: any) => String(c.id) === lastId)) {
-        setSelectedChatId(Number(lastId));
-        const found = chatHistory.find((c: any) => String(c.id) === lastId);
-
-        if (found) setSelectedChat(found.title);
-      }
+  const handleDeleteChat = (chatId: string) => {
+    if (token) {
+      dispatch(deleteChatSession({ token, sessionId: chatId }));
+    } else {
+      console.log("No token available, cannot delete chat");
     }
-  }, [chatHistory]);
+  };
 
-  // Show loading skeleton during initial load
+
+
+  // Show loading skeleton during initial load only
   if (isInitialLoading) {
     return <Loading />;
   }
@@ -159,9 +239,9 @@ export default function ChatPage() {
     <div className="flex h-[calc(100vh-2rem)] md:h-[calc(93vh-2rem)] bg-gradient-to-br from-background to-content1 rounded-none md:rounded-3xl overflow-hidden shadow-2xl relative">
       {/* Mobile Overlay */}
       {sidebarOpen && (
-        <Button
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
-          onPress={() => setSidebarOpen(false)}
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden cursor-pointer"
+          onClick={() => setSidebarOpen(false)}
         />
       )}
 
@@ -294,13 +374,14 @@ export default function ChatPage() {
             <Button
               className="w-full justify-start font-semibold bg-gradient-to-r from-primary to-secondary"
               color="primary"
+              isLoading={isCreatingSession}
               radius="lg"
               size="md"
-              startContent={<Icon icon="lucide:message-square" />}
+              startContent={!isCreatingSession && <Icon icon="lucide:message-square" />}
               variant="shadow"
               onPress={handleNewChat}
             >
-              New Conversation
+              {isCreatingSession ? "Creating..." : "New Conversation"}
             </Button>
           </div>
         </CardHeader>
@@ -320,28 +401,25 @@ export default function ChatPage() {
                 className="overflow-y-auto w-[300px] h-[600px]"
               >
                 <div className="space-y-2">
-                  {chatHistory
-                    .filter((chat) =>
-                      chat.title.toLowerCase().includes(search.toLowerCase()),
-                    )
-                    .slice()
-                    .reverse()
-                    .map((chat) => (
+                  {chatHistory.length === 0 ? (
+                    <div className="text-center text-default-500 text-sm py-4">
+                      No conversations yet. Start a new one!
+                    </div>
+                  ) : (
+                    chatHistory
+                      .filter((chat: any) =>
+                        chat.title.toLowerCase().includes(search.toLowerCase()),
+                      )
+                      .map((chat: any) => (
                       <div key={chat.id} className="relative group">
                         <button
-                          className="w-full transition-all duration-200 bg-content2/50 hover:bg-content2/80 hover:shadow-lg shadow-none rounded-md cursor-pointer text-left border-none py-2 px-4 relative"
+                            className={`w-full transition-all duration-200 hover:bg-content2/80 hover:shadow-lg shadow-none rounded-md cursor-pointer text-left border-none py-2 px-4 relative
+                            ${selectedSessionId === chat.id
+                              ? "bg-primary/20 border-l-4 border-primary"
+                              : "bg-content2/50"}`}
                           type="button"
                           onClick={() => {
-                            setSelectedChat(chat.title);
-                            setSelectedChatId(chat.id);
-                            setSidebarOpen(false);
-                            // Simpan chat yang dipilih ke localStorage agar bisa diingat saat reload
-                            if (typeof window !== "undefined") {
-                              localStorage.setItem(
-                                "lastSelectedChatId",
-                                String(chat.id),
-                              );
-                            }
+                            handleChatSelect(chat.id);
                             setTimeout(() => {
                               const textarea = document.querySelector(
                                 'textarea[placeholder="Ask me anything about finance..."]',
@@ -367,9 +445,8 @@ export default function ChatPage() {
                           </div>
                         </button>
                         {/* Action Dropdown positioned outside the clickable area */}
-                        <button
+                        <div
                           className="absolute right-2 top-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10"
-                          type="button"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <Dropdown placement="bottom-end">
@@ -394,11 +471,11 @@ export default function ChatPage() {
                               items={actions}
                               onAction={async (key) => {
                                 if (key === "delete") {
-                                  deleteChat(chat.id);
+                                  handleDeleteChat(chat.id);
                                 } else if (key === "rename") {
                                   handleRenameClick(chat);
                                 } else if (key === "archive") {
-                                  archiveChat(chat.id);
+                                  handleArchiveChat(chat.id);
                                 }
                               }}
                             >
@@ -415,9 +492,10 @@ export default function ChatPage() {
                               ))}
                             </DropdownMenu>
                           </Dropdown>
-                        </button>
+                        </div>
                       </div>
-                    ))}
+                    ))
+                  )}
                 </div>
               </ScrollShadow>
             </div>
@@ -426,9 +504,8 @@ export default function ChatPage() {
       </Card>
 
       {/* Main Chat Area */}
-      <button
-        className="flex-1 flex flex-col bg-content1/30 backdrop-blur-xl w-full relative"
-        type="button"
+      <div
+        className="flex-1 flex flex-col bg-content1/30 backdrop-blur-xl w-full relative cursor-pointer"
         onClick={() => {
           if (sidebarOpen) {
             setSidebarOpen(false);
@@ -459,7 +536,7 @@ export default function ChatPage() {
           hideScrollBar
           className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-content2/50 backdrop-blur-sm"
         >
-          {(chatMessagesById[selectedChatId]?.length ?? 0) === 0 ? (
+          {(selectedSessionId && chatMessagesById[selectedSessionId]?.length || 0) === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center max-w-2xl mx-auto px-4">
               <div className="relative mb-6 md:mb-8">
                 <div className="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-3xl flex items-center justify-center backdrop-blur-sm border border-divider/30 shadow-2xl">
@@ -520,7 +597,7 @@ export default function ChatPage() {
             </div>
           ) : (
             <div className="space-y-4 md:space-y-6 max-w-4xl mx-auto w-full">
-              {chatMessagesById[selectedChatId]?.map((message: any) => (
+              {selectedSessionId && chatMessagesById[selectedSessionId]?.map((message: any) => (
                 <ChatMessage key={message.id} message={message} />
               ))}
               {isTyping && (
@@ -590,7 +667,7 @@ export default function ChatPage() {
             />
           </CardBody>
         </Card>
-      </button>
+      </div>
     </div>
   );
 }
