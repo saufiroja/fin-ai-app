@@ -165,90 +165,101 @@ export default function TransactionViewPage() {
   });
 
   return (
-    <div className="p-6 dark:from-gray-900 dark:to-gray-800">
+    <div className="p-3 sm:p-6 dark:from-gray-900 dark:to-gray-800 min-h-screen">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <Button
               isIconOnly
-              className="text-gray-600 hover:text-gray-800"
+              className="text-gray-600 hover:text-gray-800 shrink-0"
+              size="sm"
               variant="light"
               onPress={() => router.push("/transaction")}
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft size={18} />
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white truncate">
                 Transaction Details
               </h1>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 hidden sm:block">
                 View transaction information
               </p>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-2">
+          <div className="flex gap-1 sm:gap-2 overflow-x-auto">
             <Button
-              className="text-gray-600"
-              startContent={<Share2 size={18} />}
+              className="text-gray-600 shrink-0"
+              size="sm"
+              startContent={
+                <Share2 className="sm:w-[18px] sm:h-[18px]" size={16} />
+              }
               variant="light"
             >
-              Share
+              <span className="hidden sm:inline">Share</span>
             </Button>
             <Button
-              className="text-blue-600 hover:text-blue-800"
-              startContent={<Edit3 size={18} />}
+              className="text-blue-600 hover:text-blue-800 shrink-0"
+              size="sm"
+              startContent={
+                <Edit3 className="sm:w-[18px] sm:h-[18px]" size={16} />
+              }
               variant="light"
               onPress={handleEdit}
             >
-              Edit
+              <span className="hidden sm:inline">Edit</span>
             </Button>
             <Button
-              className="text-red-600 hover:text-red-800"
-              startContent={<Trash2 size={18} />}
+              className="text-red-600 hover:text-red-800 shrink-0"
+              size="sm"
+              startContent={
+                <Trash2 className="sm:w-[18px] sm:h-[18px]" size={16} />
+              }
               variant="light"
               onPress={handleDelete}
             >
-              Delete
+              <span className="hidden sm:inline">Delete</span>
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6">
           {/* Main Transaction Info */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-3 sm:space-y-6">
             {/* Overview Card */}
             <Card className="shadow-lg">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between w-full">
+              <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-3 sm:gap-0">
                   <div className="flex items-center gap-3">
                     <div
-                      className={`p-3 rounded-full ${
+                      className={`p-2 sm:p-3 rounded-full ${
                         transaction.type === "income"
                           ? "bg-green-100 dark:bg-green-900"
                           : "bg-red-100 dark:bg-red-900"
                       }`}
                     >
                       {transaction.type === "income" ? (
-                        <TrendingUp className="text-green-600" size={24} />
+                        <TrendingUp className="text-green-600" size={20} />
                       ) : (
-                        <TrendingDown className="text-red-600" size={24} />
+                        <TrendingDown className="text-red-600" size={20} />
                       )}
                     </div>
-                    <div>
-                      <h2 className="text-xl font-semibold">
+                    <div className="min-w-0">
+                      <h2 className="text-lg sm:text-xl font-semibold truncate">
                         {transaction.type === "income" ? "Income" : "Expense"}
                       </h2>
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 truncate">
                         {formattedDate}
                       </p>
                     </div>
                   </div>
                   <Chip
+                    className="self-start sm:self-center"
                     color={transaction.type === "income" ? "success" : "danger"}
-                    size="lg"
+                    size="sm"
                     variant="flat"
                   >
                     {transaction.type.toUpperCase()}
@@ -256,18 +267,18 @@ export default function TransactionViewPage() {
                 </div>
               </CardHeader>
 
-              <CardBody className="space-y-4">
+              <CardBody className="space-y-3 sm:space-y-4 px-4 sm:px-6">
                 {/* Amount */}
-                <div className="text-center py-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                <div className="text-center py-4 sm:py-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1 sm:mb-2">
                     Amount
                   </p>
                   <p
-                    className={`text-4xl font-bold ${
+                    className={`text-2xl sm:text-4xl font-bold ${
                       transaction.type === "income"
                         ? "text-green-600"
                         : "text-red-600"
-                    }`}
+                    } break-all`}
                   >
                     {transaction.type === "income" ? "+" : "-"}Rp{" "}
                     {parseFloat(transaction.amount.toString()).toLocaleString(
@@ -277,36 +288,55 @@ export default function TransactionViewPage() {
                 </div>
 
                 {/* Category */}
-                <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <span className="text-2xl">{categoryInfo.icon}</span>
-                  <div className="flex-1">
-                    <p className="font-semibold">{categoryInfo.name}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex items-center gap-3 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <span className="text-xl sm:text-2xl shrink-0">
+                    {categoryInfo.icon}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold truncate">
+                      {categoryInfo.name}
+                    </p>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">
                       {categoryInfo.description}
                     </p>
                   </div>
                   <Chip
+                    className="shrink-0"
                     size="sm"
                     style={{
                       backgroundColor: categoryInfo.color,
                       color: "white",
                     }}
                   >
-                    Category
+                    <span className="hidden sm:inline">Category</span>
+                    <span className="sm:hidden">Cat</span>
                   </Chip>
                 </div>
 
                 {/* Payment Method */}
-                <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <span className="text-2xl">{paymentInfo.icon}</span>
-                  <div className="flex-1">
-                    <p className="font-semibold">{paymentInfo.label}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex items-center gap-3 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <span className="text-xl sm:text-2xl shrink-0">
+                    {paymentInfo.icon}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold truncate">
+                      {paymentInfo.label}
+                    </p>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">
                       Payment method used
                     </p>
                   </div>
-                  <Chip color={paymentInfo.color as any} size="sm">
-                    {paymentInfo.label}
+                  <Chip
+                    className="shrink-0"
+                    color={paymentInfo.color as any}
+                    size="sm"
+                  >
+                    <span className="hidden sm:inline">
+                      {paymentInfo.label}
+                    </span>
+                    <span className="sm:hidden text-xs">
+                      {paymentInfo.label.split(" ")[0]}
+                    </span>
                   </Chip>
                 </div>
               </CardBody>
@@ -314,23 +344,30 @@ export default function TransactionViewPage() {
 
             {/* Details Card */}
             <Card className="shadow-lg">
-              <CardHeader>
+              <CardHeader className="px-4 sm:px-6">
                 <div className="flex items-center gap-2">
-                  <FileText className="text-blue-500" size={20} />
-                  <h3 className="text-lg font-semibold">Transaction Details</h3>
+                  <FileText className="text-blue-500" size={18} />
+                  <h3 className="text-base sm:text-lg font-semibold">
+                    Transaction Details
+                  </h3>
                 </div>
               </CardHeader>
 
-              <CardBody className="space-y-4">
-                {/* Recipient/Payer */}
+              <CardBody className="space-y-3 sm:space-y-4 px-4 sm:px-6">
+                {/* Description */}
                 {transaction.description && (
                   <div className="flex items-start gap-3">
-                    <FileText className="text-gray-400 mt-1" size={16} />
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <FileText
+                      className="text-gray-400 mt-1 shrink-0"
+                      size={14}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                         Description
                       </p>
-                      <p className="font-medium">{transaction.description}</p>
+                      <p className="font-medium text-sm sm:text-base break-words">
+                        {transaction.description}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -338,12 +375,14 @@ export default function TransactionViewPage() {
                 {/* Source */}
                 {transaction.source && (
                   <div className="flex items-start gap-3">
-                    <MapPin className="text-gray-400 mt-1" size={16} />
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <MapPin className="text-gray-400 mt-1 shrink-0" size={14} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                         Payment Source
                       </p>
-                      <p className="font-medium">{transaction.source}</p>
+                      <p className="font-medium text-sm sm:text-base break-words">
+                        {transaction.source}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -351,9 +390,9 @@ export default function TransactionViewPage() {
                 {/* Auto Categorized Status */}
                 {transaction.is_auto_categorized !== undefined && (
                   <div className="flex items-start gap-3">
-                    <Tag className="text-gray-400 mt-1" size={16} />
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <Tag className="text-gray-400 mt-1 shrink-0" size={14} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                         Categorization
                       </p>
                       <Chip
@@ -376,9 +415,9 @@ export default function TransactionViewPage() {
                 {/* Confirmation Status */}
                 {transaction.confirmed !== undefined && (
                   <div className="flex items-start gap-3">
-                    <Tag className="text-gray-400 mt-1" size={16} />
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <Tag className="text-gray-400 mt-1 shrink-0" size={14} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                         Status
                       </p>
                       <Chip
@@ -394,12 +433,12 @@ export default function TransactionViewPage() {
 
                 {/* Discount */}
                 <div className="flex items-start gap-3">
-                  <Tag className="text-gray-400 mt-1" size={16} />
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <Tag className="text-gray-400 mt-1 shrink-0" size={14} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                       Discount
                     </p>
-                    <p className="font-medium text-green-600">
+                    <p className="font-medium text-green-600 text-sm sm:text-base break-all">
                       Rp{" "}
                       {parseFloat(
                         transaction.discount.toString(),
@@ -412,24 +451,29 @@ export default function TransactionViewPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-3 sm:space-y-6">
             {/* Transaction ID */}
             <Card className="shadow-lg">
-              <CardHeader>
-                <h3 className="text-lg font-semibold">Transaction ID</h3>
+              <CardHeader className="px-4 sm:px-6">
+                <h3 className="text-base sm:text-lg font-semibold">
+                  Transaction ID
+                </h3>
               </CardHeader>
-              <CardBody>
+              <CardBody className="px-4 sm:px-6">
                 <div className="flex items-center gap-2">
-                  <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-sm flex-1">
-                    {transaction.transaction_id}
+                  <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-xs sm:text-sm flex-1 overflow-hidden">
+                    <span className="block truncate">
+                      {transaction.transaction_id}
+                    </span>
                   </code>
                   <Button
                     isIconOnly
+                    className="shrink-0"
                     size="sm"
                     variant="light"
                     onPress={handleCopyId}
                   >
-                    <Copy size={14} />
+                    <Copy size={12} />
                   </Button>
                 </div>
               </CardBody>
@@ -437,56 +481,60 @@ export default function TransactionViewPage() {
 
             {/* Timestamps */}
             <Card className="shadow-lg">
-              <CardHeader>
-                <h3 className="text-lg font-semibold">Timeline</h3>
+              <CardHeader className="px-4 sm:px-6">
+                <h3 className="text-base sm:text-lg font-semibold">Timeline</h3>
               </CardHeader>
-              <CardBody className="space-y-3">
+              <CardBody className="space-y-2 sm:space-y-3 px-4 sm:px-6">
                 {transaction.created_at && (
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                       Created
                     </p>
-                    <p className="font-medium text-sm">
+                    <p className="font-medium text-xs sm:text-sm break-all">
                       {new Date(transaction.created_at).toLocaleString()}
                     </p>
                   </div>
                 )}
                 {transaction.updated_at && (
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                       Last Updated
                     </p>
-                    <p className="font-medium text-sm">
+                    <p className="font-medium text-xs sm:text-sm break-all">
                       {new Date(transaction.updated_at).toLocaleString()}
                     </p>
                   </div>
                 )}
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     Transaction Date
                   </p>
-                  <p className="font-medium text-sm">{formattedDate}</p>
+                  <p className="font-medium text-xs sm:text-sm">
+                    {formattedDate}
+                  </p>
                 </div>
               </CardBody>
             </Card>
 
             {/* Quick Actions */}
             <Card className="shadow-lg">
-              <CardHeader>
-                <h3 className="text-lg font-semibold">Quick Actions</h3>
+              <CardHeader className="px-4 sm:px-6">
+                <h3 className="text-base sm:text-lg font-semibold">
+                  Quick Actions
+                </h3>
               </CardHeader>
-              <CardBody className="space-y-2">
+              <CardBody className="space-y-1 sm:space-y-2 px-4 sm:px-6">
                 <Button
-                  className="w-full justify-start"
-                  startContent={<Edit3 size={16} />}
+                  className="w-full justify-start text-sm"
+                  startContent={<Edit3 size={14} />}
                   variant="light"
                   onPress={handleEdit}
                 >
                   Edit Transaction
                 </Button>
                 <Button
-                  className="w-full justify-start"
-                  startContent={<Copy size={16} />}
+                  className="w-full justify-start text-sm"
+                  startContent={<Copy size={14} />}
                   variant="light"
                   onPress={() => {
                     // Duplicate transaction functionality
@@ -499,8 +547,8 @@ export default function TransactionViewPage() {
                 </Button>
                 <Divider />
                 <Button
-                  className="w-full justify-start text-red-600"
-                  startContent={<Trash2 size={16} />}
+                  className="w-full justify-start text-red-600 text-sm"
+                  startContent={<Trash2 size={14} />}
                   variant="light"
                   onPress={handleDelete}
                 >
