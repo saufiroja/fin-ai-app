@@ -19,8 +19,8 @@
 
 [context.production.environment]
   # TODO: Replace with your production API URL
-  NEXT_PUBLIC_API_URL = "http://103.183.74.179:8080/api/v1"
+  NEXT_PUBLIC_API_URL = "https://fin-ai-backend.fin-ai-api.my.id/api/v1"
 
 [context.deploy-preview.environment]
   # TODO: Replace with your staging or preview API URL
-  NEXT_PUBLIC_API_URL = "http://103.183.74.179:8080/api/v1"
+  NEXT_PUBLIC_API_URL = "https://fin-ai-backend.fin-ai-api.my.id/api/v1"
