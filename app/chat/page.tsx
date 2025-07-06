@@ -11,6 +11,7 @@ import {
 } from "@heroui/dropdown";
 import { Input, Textarea } from "@heroui/input";
 import { Button } from "@heroui/button";
+import { Select, SelectItem } from "@heroui/select";
 import { ScrollShadow } from "@heroui/scroll-shadow";
 import { Form } from "@heroui/form";
 import {
@@ -65,6 +66,38 @@ const actions = [
   },
 ];
 
+// Mode and Model options
+const modeOptions = [
+  {
+    key: "ask",
+    label: "Ask Mode",
+    description: "Get direct answers to your questions",
+  },
+  {
+    key: "agent",
+    label: "Agent Mode",
+    description: "AI agent with advanced reasoning",
+  },
+];
+
+const modelOptions = [
+  {
+    key: "01JW320X5V1N7QQS2YAFC6FS71",
+    label: "Gemini 2.5 Flash",
+    description: "Advanced language model",
+  },
+  {
+    key: "gpt-3.5-turbo",
+    label: "GPT-3.5 Turbo",
+    description: "Fast and efficient model",
+  },
+  {
+    key: "claude-3",
+    label: "Claude-3",
+    description: "Anthropic's latest model",
+  },
+];
+
 export default function ChatPage() {
   const { token } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch<AppDispatch>();
@@ -90,6 +123,12 @@ export default function ChatPage() {
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [renamingChat, setRenamingChat] = useState<any>(null);
   const [renameValue, setRenameValue] = useState("");
+
+  // Chat settings state
+  const [selectedMode, setSelectedMode] = useState<"ask" | "agent">("ask");
+  const [selectedModel, setSelectedModel] = useState(
+    "01JW320X5V1N7QQS2YAFC6FS71",
+  );
 
   // Initialize chat data
   useEffect(() => {
@@ -198,7 +237,8 @@ export default function ChatPage() {
             token,
             chatSessionId: sessionId,
             message: userMessage,
-            mode: "ask", // or "agent" depending on your needs
+            modelId: selectedModel,
+            mode: selectedMode,
           }),
         );
 
@@ -663,6 +703,8 @@ export default function ChatPage() {
                     onPress={() => {
                       if (!isSendingMessage && !isCreatingSession) {
                         setNewMessage(prompt.text);
+                        // Set mode to ask for suggested prompts
+                        setSelectedMode("ask");
                         setTimeout(() => {
                           handleSendMessage();
                         }, 100);
@@ -712,63 +754,115 @@ export default function ChatPage() {
             </div>
           )}
         </ScrollShadow>
-        {/* Enhanced Input Area */}
-        <Card className="shadow-none rounded-none bg-content1/50">
-          <CardBody className="p-3 md:p-4">
-            <Textarea
+        {/* Compact Input Area */}
+        <div className="p-3 md:p-4 bg-content1/50 border-t border-divider/20">
+          {/* Mode and Model Selection - Collapsible */}
+          <div className="flex gap-2 mb-3">
+            <Select
+              className="w-36"
               classNames={{
-                inputWrapper:
-                  "border-2 border-primary/40 bg-content2/70 backdrop-blur-md hover:bg-content2/90 transition-all shadow-md min-h-[50px]",
-                input:
-                  "text-base md:text-md font-medium placeholder:font-normal resize-none",
+                trigger: "bg-content2/50 border-primary/10 h-8 min-h-8",
+                value: "text-xs",
+                label: "text-xs",
               }}
-              endContent={
-                <Button
-                  isIconOnly
-                  aria-label="Send message"
-                  className="rounded-full shadow-md transition-transform hover:scale-110 active:scale-95 duration-150 bg-gradient-to-r from-primary to-secondary"
-                  color="primary"
-                  isDisabled={
-                    isSendingMessage || isCreatingSession || !newMessage.trim()
-                  }
-                  isLoading={isSendingMessage || isCreatingSession}
-                  size="sm"
-                  type="submit"
-                  variant="solid"
-                  onPress={handleSendMessage}
-                >
-                  {!isSendingMessage && (
-                    <Icon className="text-sm" icon="lucide:send" />
-                  )}
-                </Button>
-              }
-              isDisabled={isSendingMessage || isCreatingSession}
-              maxRows={4}
-              minRows={1}
-              placeholder="Ask me anything about finance..."
+              label="Mode"
               radius="md"
-              startContent={
-                <div className="flex items-center justify-center w-4 h-4 rounded-full">
-                  <SparkleIcon />
-                </div>
-              }
-              value={newMessage}
+              selectedKeys={[selectedMode]}
+              size="sm"
               variant="bordered"
-              onKeyDown={(e: any) => {
-                if (
-                  e.key === "Enter" &&
-                  !e.shiftKey &&
-                  !isSendingMessage &&
-                  !isCreatingSession
-                ) {
-                  e.preventDefault();
-                  handleSendMessage();
-                }
+              onSelectionChange={(keys) => {
+                const selected = Array.from(keys)[0] as "ask" | "agent";
+
+                setSelectedMode(selected);
               }}
-              onValueChange={setNewMessage}
-            />
-          </CardBody>
-        </Card>
+            >
+              {modeOptions.map((mode) => (
+                <SelectItem key={mode.key}>{mode.label}</SelectItem>
+              ))}
+            </Select>
+
+            <Select
+              className="w-40"
+              classNames={{
+                trigger: "bg-content2/50 border-primary/10 h-8 min-h-8",
+                value: "text-xs",
+                label: "text-xs",
+              }}
+              label="Model"
+              radius="md"
+              selectedKeys={[selectedModel]}
+              size="sm"
+              variant="bordered"
+              onSelectionChange={(keys) => {
+                const selected = Array.from(keys)[0] as string;
+
+                setSelectedModel(selected);
+              }}
+            >
+              {modelOptions.map((model) => (
+                <SelectItem key={model.key} description={model.description}>
+                  {model.label}
+                </SelectItem>
+              ))}
+            </Select>
+          </div>
+
+          {/* Compact Chat Input */}
+          <div className="flex items-end gap-2">
+            <div className="flex-1 relative">
+              <Textarea
+                classNames={{
+                  inputWrapper:
+                    "border border-primary/30 bg-content2/50 hover:bg-content2/70 transition-all min-h-[40px] max-h-[120px]",
+                  input:
+                    "text-sm font-normal placeholder:font-normal resize-none py-2",
+                }}
+                isDisabled={isSendingMessage || isCreatingSession}
+                maxRows={3}
+                minRows={1}
+                placeholder="Ask me anything about finance..."
+                radius="lg"
+                startContent={
+                  <div className="flex items-center justify-center w-4 h-4 mr-1">
+                    <SparkleIcon />
+                  </div>
+                }
+                value={newMessage}
+                variant="bordered"
+                onKeyDown={(e: any) => {
+                  if (
+                    e.key === "Enter" &&
+                    !e.shiftKey &&
+                    !isSendingMessage &&
+                    !isCreatingSession
+                  ) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                onValueChange={setNewMessage}
+              />
+            </div>
+            <Button
+              isIconOnly
+              aria-label="Send message"
+              className="rounded-full bg-gradient-to-r from-primary to-secondary h-10 w-10 min-w-10"
+              color="primary"
+              isDisabled={
+                isSendingMessage || isCreatingSession || !newMessage.trim()
+              }
+              isLoading={isSendingMessage || isCreatingSession}
+              size="sm"
+              type="submit"
+              variant="solid"
+              onPress={handleSendMessage}
+            >
+              {!isSendingMessage && (
+                <Icon className="text-sm" icon="lucide:send" />
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
