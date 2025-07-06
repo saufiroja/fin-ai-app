@@ -184,14 +184,14 @@ export default function LoginPage() {
             </form>
 
             {/* Social Login Divider */}
-            <div className="flex items-center gap-4 my-6">
+            {/* <div className="flex items-center gap-4 my-6">
               <Divider className="flex-1" />
               <span className="text-default-400 text-sm">Or continue with</span>
               <Divider className="flex-1" />
-            </div>
+            </div> */}
 
             {/* Social Login Buttons */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* <div className="grid grid-cols-2 gap-4">
               <Button
                 className="border-default-300 hover:border-primary/50"
                 startContent={<Icon className="text-lg" icon="lucide:github" />}
@@ -206,7 +206,7 @@ export default function LoginPage() {
               >
                 Google
               </Button>
-            </div>
+            </div> */}
 
             {/* Sign Up Link */}
             <div className="text-center mt-6">

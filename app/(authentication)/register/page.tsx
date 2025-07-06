@@ -251,14 +251,14 @@ export default function RegisterPage() {
             </form>
 
             {/* Social Register Divider */}
-            <div className="flex items-center gap-4 my-6">
+            {/* <div className="flex items-center gap-4 my-6">
               <Divider className="flex-1" />
               <span className="text-default-400 text-sm">Or register with</span>
               <Divider className="flex-1" />
-            </div>
+            </div> */}
 
             {/* Social Register Buttons */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* <div className="grid grid-cols-2 gap-4">
               <Button
                 className="border-default-300 hover:border-primary/50"
                 startContent={<Icon className="text-lg" icon="lucide:github" />}
@@ -273,7 +273,7 @@ export default function RegisterPage() {
               >
                 Google
               </Button>
-            </div>
+            </div> */}
 
             {/* Sign In Link */}
             <div className="text-center mt-6">
