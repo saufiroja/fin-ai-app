@@ -87,12 +87,12 @@ const modelOptions = [
     description: "Advanced language model",
   },
   {
-    key: "gpt-3.5-turbo",
+    key: "01JW320X5V1N7QQS2YAFC6FS71",
     label: "GPT-3.5 Turbo",
     description: "Fast and efficient model",
   },
   {
-    key: "claude-3",
+    key: "01JW320X5V1N7QQS2YAFC6FS71",
     label: "Claude-3",
     description: "Anthropic's latest model",
   },
